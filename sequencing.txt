@@ -1,0 +1,745 @@
+Gameplay events:
+  350 ms: S1
+ 1450 ms: S1
+ 1700 ms: S3
+ 3050 ms: S1
+ 3300 ms: S3
+ 3550 ms: S4
+ 5150 ms: S1
+ 5400 ms: S3
+ 5650 ms: S4
+ 5900 ms: S1
+ 7750 ms: S1
+ 8000 ms: S3
+ 8250 ms: S4
+ 8500 ms: S1
+ 8750 ms: S3
+10850 ms: S1
+11100 ms: S3
+11350 ms: S4
+11600 ms: S1
+11850 ms: S3
+12100 ms: S4
+14450 ms: S1
+14700 ms: S3
+14950 ms: S4
+15200 ms: S1
+15450 ms: S3
+15700 ms: S4
+15950 ms: S3
+18550 ms: S1
+18800 ms: S3
+19050 ms: S4
+19300 ms: S1
+19550 ms: S3
+19800 ms: S4
+20050 ms: S3
+20300 ms: S2
+23150 ms: S1
+23400 ms: S3
+23650 ms: S4
+23900 ms: S1
+24150 ms: S3
+24400 ms: S4
+24650 ms: S3
+24900 ms: S2
+25150 ms: S4
+28250 ms: S1
+28500 ms: S3
+28750 ms: S4
+29000 ms: S1
+29250 ms: S3
+29500 ms: S4
+29750 ms: S3
+30000 ms: S2
+30250 ms: S4
+30500 ms: S1
+
+Detected buzzer events:
+    6 ms:  358.00 Hz, 50.00 % duty cycle
+  131 ms:    0.00 Hz,  0.00 % duty cycle
+  361 ms:    4.30 Hz,  0.60 % duty cycle
+  364 ms:  358.00 Hz, 50.00 % duty cycle
+  488 ms:    0.00 Hz,  0.00 % duty cycle
+  746 ms:    3.80 Hz,  0.50 % duty cycle
+  749 ms:  358.00 Hz, 50.00 % duty cycle
+  873 ms:    0.00 Hz,  0.00 % duty cycle
+ 1006 ms:    7.50 Hz,  1.00 % duty cycle
+ 1008 ms:  478.00 Hz, 50.00 % duty cycle
+ 1133 ms:    0.00 Hz,  0.00 % duty cycle
+ 1462 ms:    3.00 Hz,  0.30 % duty cycle
+ 1465 ms:  358.00 Hz, 50.00 % duty cycle
+ 1589 ms:    0.00 Hz,  0.00 % duty cycle
+ 1711 ms:    8.10 Hz,  1.10 % duty cycle
+ 1713 ms:  478.00 Hz, 50.00 % duty cycle
+ 1837 ms:    0.00 Hz,  0.00 % duty cycle
+ 2096 ms:    3.90 Hz,  0.40 % duty cycle
+ 2099 ms:  358.00 Hz, 50.00 % duty cycle
+ 2223 ms:    0.00 Hz,  0.00 % duty cycle
+ 2355 ms:    7.50 Hz,  1.00 % duty cycle
+ 2358 ms:  478.00 Hz, 50.00 % duty cycle
+ 2482 ms:    0.00 Hz,  0.00 % duty cycle
+ 2613 ms:    7.60 Hz,  0.80 % duty cycle
+ 2618 ms:  179.00 Hz, 50.00 % duty cycle
+ 2739 ms:    0.00 Hz,  0.00 % duty cycle
+ 3065 ms:    3.00 Hz,  0.80 % duty cycle
+ 3068 ms:  358.00 Hz, 50.00 % duty cycle
+ 3187 ms:    0.00 Hz,  0.00 % duty cycle
+ 3311 ms:    8.00 Hz,  1.10 % duty cycle
+ 3313 ms:  478.00 Hz, 50.00 % duty cycle
+ 3438 ms:    0.00 Hz,  0.00 % duty cycle
+ 3562 ms:    8.00 Hz,  0.80 % duty cycle
+ 3568 ms:  179.00 Hz, 50.00 % duty cycle
+ 3688 ms:    0.00 Hz,  0.00 % duty cycle
+ 3947 ms:    3.80 Hz,  1.10 % duty cycle
+ 3950 ms:  358.00 Hz, 50.00 % duty cycle
+ 4075 ms:    0.00 Hz,  0.00 % duty cycle
+ 4204 ms:    7.60 Hz,  1.10 % duty cycle
+ 4207 ms:  478.00 Hz, 50.00 % duty cycle
+ 4331 ms:    0.00 Hz,  0.00 % duty cycle
+ 4462 ms:    7.60 Hz,  0.80 % duty cycle
+ 4467 ms:  179.00 Hz, 50.00 % duty cycle
+ 4587 ms:    0.00 Hz,  0.00 % duty cycle
+ 4724 ms:    7.20 Hz,  2.00 % duty cycle
+ 4727 ms:  358.00 Hz, 50.00 % duty cycle
+ 4849 ms:    0.00 Hz,  0.00 % duty cycle
+ 5163 ms:    3.20 Hz,  0.40 % duty cycle
+ 5166 ms:  358.00 Hz, 50.00 % duty cycle
+ 5287 ms:    0.00 Hz,  0.00 % duty cycle
+ 5411 ms:    8.00 Hz,  1.10 % duty cycle
+ 5413 ms:  478.00 Hz, 50.00 % duty cycle
+ 5538 ms:    0.00 Hz,  0.00 % duty cycle
+ 5662 ms:    8.00 Hz,  0.80 % duty cycle
+ 5668 ms:  179.00 Hz, 50.00 % duty cycle
+ 5788 ms:    0.00 Hz,  0.00 % duty cycle
+ 5914 ms:    7.80 Hz,  2.20 % duty cycle
+ 5917 ms:  358.00 Hz, 50.00 % duty cycle
+ 6038 ms:    0.00 Hz,  0.00 % duty cycle
+ 6296 ms:    3.80 Hz,  0.50 % duty cycle
+ 6299 ms:  358.00 Hz, 50.00 % duty cycle
+ 6424 ms:    0.00 Hz,  0.00 % duty cycle
+ 6553 ms:    7.60 Hz,  1.10 % duty cycle
+ 6555 ms:  478.00 Hz, 50.00 % duty cycle
+ 6682 ms:    0.00 Hz,  0.00 % duty cycle
+ 6813 ms:    7.60 Hz,  0.80 % duty cycle
+ 6818 ms:  179.00 Hz, 50.00 % duty cycle
+ 6938 ms:    0.00 Hz,  0.00 % duty cycle
+ 7070 ms:    7.50 Hz,  2.10 % duty cycle
+ 7073 ms:  358.00 Hz, 50.00 % duty cycle
+ 7197 ms:    0.00 Hz,  0.00 % duty cycle
+ 7329 ms:    7.50 Hz,  1.00 % duty cycle
+ 7332 ms:  478.00 Hz, 50.00 % duty cycle
+ 7456 ms:    0.00 Hz,  0.00 % duty cycle
+ 7763 ms:    3.30 Hz,  0.30 % duty cycle
+ 7765 ms:  358.00 Hz, 50.00 % duty cycle
+ 7890 ms:    0.00 Hz,  0.00 % duty cycle
+ 8011 ms:    8.10 Hz,  1.10 % duty cycle
+ 8013 ms:  478.00 Hz, 50.00 % duty cycle
+ 8138 ms:    0.00 Hz,  0.00 % duty cycle
+ 8262 ms:    8.00 Hz,  0.80 % duty cycle
+ 8268 ms:  179.00 Hz, 50.00 % duty cycle
+ 8388 ms:    0.00 Hz,  0.00 % duty cycle
+ 8514 ms:    7.80 Hz,  2.20 % duty cycle
+ 8516 ms:  358.00 Hz, 50.00 % duty cycle
+ 8638 ms:    0.00 Hz,  0.00 % duty cycle
+ 8762 ms:    8.00 Hz,  1.10 % duty cycle
+ 8764 ms:  478.00 Hz, 50.00 % duty cycle
+ 8889 ms:    0.00 Hz,  0.00 % duty cycle
+ 9147 ms:    3.90 Hz,  0.40 % duty cycle
+ 9150 ms:  358.00 Hz, 50.00 % duty cycle
+ 9274 ms:    0.00 Hz,  0.00 % duty cycle
+ 9404 ms:    7.60 Hz,  1.10 % duty cycle
+ 9406 ms:  478.00 Hz, 50.00 % duty cycle
+ 9533 ms:    0.00 Hz,  0.00 % duty cycle
+ 9663 ms:    7.60 Hz,  0.80 % duty cycle
+ 9669 ms:  179.00 Hz, 50.00 % duty cycle
+ 9789 ms:    0.00 Hz,  0.00 % duty cycle
+ 9920 ms:    7.50 Hz,  2.10 % duty cycle
+ 9923 ms:  358.00 Hz, 50.00 % duty cycle
+10048 ms:    0.00 Hz,  0.00 % duty cycle
+10180 ms:    7.50 Hz,  1.00 % duty cycle
+10182 ms:  478.00 Hz, 50.00 % duty cycle
+10307 ms:    0.00 Hz,  0.00 % duty cycle
+10438 ms:    7.60 Hz,  0.80 % duty cycle
+10443 ms:  179.00 Hz, 50.00 % duty cycle
+10563 ms:    0.00 Hz,  0.00 % duty cycle
+10862 ms:    3.30 Hz,  0.90 % duty cycle
+10865 ms:  358.00 Hz, 50.00 % duty cycle
+10989 ms:    0.00 Hz,  0.00 % duty cycle
+11113 ms:    8.00 Hz,  1.10 % duty cycle
+11115 ms:  478.00 Hz, 50.00 % duty cycle
+11238 ms:    0.00 Hz,  0.00 % duty cycle
+11362 ms:    8.00 Hz,  0.80 % duty cycle
+11368 ms:  179.00 Hz, 50.00 % duty cycle
+11488 ms:    0.00 Hz,  0.00 % duty cycle
+11614 ms:    7.80 Hz,  2.20 % duty cycle
+11616 ms:  358.00 Hz, 50.00 % duty cycle
+11738 ms:    0.00 Hz,  0.00 % duty cycle
+11862 ms:    8.00 Hz,  1.10 % duty cycle
+11864 ms:  478.00 Hz, 50.00 % duty cycle
+11989 ms:    0.00 Hz,  0.00 % duty cycle
+12111 ms:    8.10 Hz,  0.80 % duty cycle
+12117 ms:  179.00 Hz, 50.00 % duty cycle
+12237 ms:    0.00 Hz,  0.00 % duty cycle
+12497 ms:    3.80 Hz,  1.10 % duty cycle
+12499 ms:  358.00 Hz, 50.00 % duty cycle
+12624 ms:    0.00 Hz,  0.00 % duty cycle
+12754 ms:    7.60 Hz,  1.10 % duty cycle
+12756 ms:  478.00 Hz, 50.00 % duty cycle
+12882 ms:    0.00 Hz,  0.00 % duty cycle
+13013 ms:    7.60 Hz,  0.80 % duty cycle
+13019 ms:  179.00 Hz, 50.00 % duty cycle
+13139 ms:    0.00 Hz,  0.00 % duty cycle
+13270 ms:    7.50 Hz,  2.10 % duty cycle
+13273 ms:  358.00 Hz, 50.00 % duty cycle
+13397 ms:    0.00 Hz,  0.00 % duty cycle
+13530 ms:    7.50 Hz,  1.00 % duty cycle
+13532 ms:  478.00 Hz, 50.00 % duty cycle
+13656 ms:    0.00 Hz,  0.00 % duty cycle
+13787 ms:    7.60 Hz,  0.80 % duty cycle
+13793 ms:  179.00 Hz, 50.00 % duty cycle
+13913 ms:    0.00 Hz,  0.00 % duty cycle
+14044 ms:    7.50 Hz,  2.10 % duty cycle
+14046 ms:  478.00 Hz, 50.00 % duty cycle
+14173 ms:    0.00 Hz,  0.00 % duty cycle
+14462 ms:    3.40 Hz,  0.40 % duty cycle
+14465 ms:  358.00 Hz, 50.00 % duty cycle
+14587 ms:    0.00 Hz,  0.00 % duty cycle
+14711 ms:    8.00 Hz,  1.10 % duty cycle
+14713 ms:  478.00 Hz, 50.00 % duty cycle
+14840 ms:    0.00 Hz,  0.00 % duty cycle
+14962 ms:    8.10 Hz,  0.80 % duty cycle
+14968 ms:  179.00 Hz, 50.00 % duty cycle
+15088 ms:    0.00 Hz,  0.00 % duty cycle
+15213 ms:    7.80 Hz,  2.20 % duty cycle
+15216 ms:  358.00 Hz, 50.00 % duty cycle
+15338 ms:    0.00 Hz,  0.00 % duty cycle
+15462 ms:    8.00 Hz,  1.10 % duty cycle
+15464 ms:  478.00 Hz, 50.00 % duty cycle
+15589 ms:    0.00 Hz,  0.00 % duty cycle
+15713 ms:    8.00 Hz,  0.80 % duty cycle
+15719 ms:  179.00 Hz, 50.00 % duty cycle
+15839 ms:    0.00 Hz,  0.00 % duty cycle
+15964 ms:    7.80 Hz,  2.20 % duty cycle
+15966 ms:  478.00 Hz, 50.00 % duty cycle
+16089 ms:    0.00 Hz,  0.00 % duty cycle
+16347 ms:    3.90 Hz,  0.40 % duty cycle
+16350 ms:  358.00 Hz, 50.00 % duty cycle
+16474 ms:    0.00 Hz,  0.00 % duty cycle
+16604 ms:    7.60 Hz,  1.10 % duty cycle
+16606 ms:  478.00 Hz, 50.00 % duty cycle
+16733 ms:    0.00 Hz,  0.00 % duty cycle
+16864 ms:    7.60 Hz,  0.80 % duty cycle
+16869 ms:  179.00 Hz, 50.00 % duty cycle
+16989 ms:    0.00 Hz,  0.00 % duty cycle
+17121 ms:    7.50 Hz,  2.10 % duty cycle
+17123 ms:  358.00 Hz, 50.00 % duty cycle
+17248 ms:    0.00 Hz,  0.00 % duty cycle
+17380 ms:    7.50 Hz,  1.00 % duty cycle
+17382 ms:  478.00 Hz, 50.00 % duty cycle
+17507 ms:    0.00 Hz,  0.00 % duty cycle
+17638 ms:    7.60 Hz,  0.80 % duty cycle
+17643 ms:  179.00 Hz, 50.00 % duty cycle
+17763 ms:    0.00 Hz,  0.00 % duty cycle
+17895 ms:    7.50 Hz,  2.10 % duty cycle
+17897 ms:  478.00 Hz, 50.00 % duty cycle
+18023 ms:    0.00 Hz,  0.00 % duty cycle
+18152 ms:    7.70 Hz,  0.80 % duty cycle
+18155 ms:  301.10 Hz, 50.00 % duty cycle
+18280 ms:    0.00 Hz,  0.00 % duty cycle
+18564 ms:    3.50 Hz,  0.60 % duty cycle
+18567 ms:  358.00 Hz, 50.00 % duty cycle
+18688 ms:    0.00 Hz,  0.00 % duty cycle
+18812 ms:    8.00 Hz,  1.10 % duty cycle
+18814 ms:  478.00 Hz, 50.00 % duty cycle
+18939 ms:    0.00 Hz,  0.00 % duty cycle
+19061 ms:    8.10 Hz,  0.80 % duty cycle
+19067 ms:  179.00 Hz, 50.00 % duty cycle
+19187 ms:    0.00 Hz,  0.00 % duty cycle
+19313 ms:    7.80 Hz,  2.20 % duty cycle
+19315 ms:  358.00 Hz, 50.00 % duty cycle
+19440 ms:    0.00 Hz,  0.00 % duty cycle
+19561 ms:    8.10 Hz,  1.10 % duty cycle
+19563 ms:  478.00 Hz, 50.00 % duty cycle
+19688 ms:    0.00 Hz,  0.00 % duty cycle
+19812 ms:    8.00 Hz,  0.80 % duty cycle
+19818 ms:  179.00 Hz, 50.00 % duty cycle
+19938 ms:    0.00 Hz,  0.00 % duty cycle
+20064 ms:    7.80 Hz,  2.20 % duty cycle
+20066 ms:  478.00 Hz, 50.00 % duty cycle
+20188 ms:    0.00 Hz,  0.00 % duty cycle
+20313 ms:    8.00 Hz,  0.80 % duty cycle
+20316 ms:  301.10 Hz, 50.00 % duty cycle
+20437 ms:    0.00 Hz,  0.00 % duty cycle
+20698 ms:    3.80 Hz,  0.60 % duty cycle
+20701 ms:  358.00 Hz, 50.00 % duty cycle
+20825 ms:    0.00 Hz,  0.00 % duty cycle
+20955 ms:    7.60 Hz,  1.10 % duty cycle
+20957 ms:  478.00 Hz, 50.00 % duty cycle
+21081 ms:    0.00 Hz,  0.00 % duty cycle
+21212 ms:    7.60 Hz,  0.80 % duty cycle
+21218 ms:  179.00 Hz, 50.00 % duty cycle
+21338 ms:    0.00 Hz,  0.00 % duty cycle
+21475 ms:    7.20 Hz,  2.00 % duty cycle
+21477 ms:  358.00 Hz, 50.00 % duty cycle
+21599 ms:    0.00 Hz,  0.00 % duty cycle
+21729 ms:    7.60 Hz,  1.10 % duty cycle
+21731 ms:  478.00 Hz, 50.00 % duty cycle
+21855 ms:    0.00 Hz,  0.00 % duty cycle
+21986 ms:    7.60 Hz,  0.80 % duty cycle
+21992 ms:  179.00 Hz, 50.00 % duty cycle
+22112 ms:    0.00 Hz,  0.00 % duty cycle
+22249 ms:    7.20 Hz,  2.00 % duty cycle
+22251 ms:  478.00 Hz, 50.00 % duty cycle
+22373 ms:    0.00 Hz,  0.00 % duty cycle
+22502 ms:    7.70 Hz,  0.80 % duty cycle
+22505 ms:  301.10 Hz, 50.00 % duty cycle
+22630 ms:    0.00 Hz,  0.00 % duty cycle
+22761 ms:    7.50 Hz,  1.20 % duty cycle
+22766 ms:  179.00 Hz, 50.00 % duty cycle
+22887 ms:    0.00 Hz,  0.00 % duty cycle
+23163 ms:    3.60 Hz,  1.00 % duty cycle
+23166 ms:  358.00 Hz, 50.00 % duty cycle
+23290 ms:    0.00 Hz,  0.00 % duty cycle
+23412 ms:    8.10 Hz,  1.10 % duty cycle
+23414 ms:  478.00 Hz, 50.00 % duty cycle
+23538 ms:    0.00 Hz,  0.00 % duty cycle
+23663 ms:    8.00 Hz,  0.80 % duty cycle
+23668 ms:  179.00 Hz, 50.00 % duty cycle
+23788 ms:    0.00 Hz,  0.00 % duty cycle
+23914 ms:    7.80 Hz,  2.20 % duty cycle
+23917 ms:  358.00 Hz, 50.00 % duty cycle
+24038 ms:    0.00 Hz,  0.00 % duty cycle
+24163 ms:    8.00 Hz,  1.10 % duty cycle
+24165 ms:  478.00 Hz, 50.00 % duty cycle
+24289 ms:    0.00 Hz,  0.00 % duty cycle
+24412 ms:    8.10 Hz,  0.80 % duty cycle
+24417 ms:  179.00 Hz, 50.00 % duty cycle
+24537 ms:    0.00 Hz,  0.00 % duty cycle
+24663 ms:    7.80 Hz,  2.20 % duty cycle
+24665 ms:  478.00 Hz, 50.00 % duty cycle
+24789 ms:    0.00 Hz,  0.00 % duty cycle
+24912 ms:    8.10 Hz,  0.80 % duty cycle
+24915 ms:  301.10 Hz, 50.00 % duty cycle
+25040 ms:    0.00 Hz,  0.00 % duty cycle
+25164 ms:    7.90 Hz,  1.30 % duty cycle
+25170 ms:  179.00 Hz, 50.00 % duty cycle
+25290 ms:    0.00 Hz,  0.00 % duty cycle
+25550 ms:    3.80 Hz,  1.10 % duty cycle
+25552 ms:  358.00 Hz, 50.00 % duty cycle
+25674 ms:    0.00 Hz,  0.00 % duty cycle
+25807 ms:    7.50 Hz,  1.00 % duty cycle
+25809 ms:  478.00 Hz, 50.00 % duty cycle
+25933 ms:    0.00 Hz,  0.00 % duty cycle
+26064 ms:    7.60 Hz,  0.80 % duty cycle
+26070 ms:  179.00 Hz, 50.00 % duty cycle
+26190 ms:    0.00 Hz,  0.00 % duty cycle
+26321 ms:    7.50 Hz,  2.10 % duty cycle
+26324 ms:  358.00 Hz, 50.00 % duty cycle
+26448 ms:    0.00 Hz,  0.00 % duty cycle
+26581 ms:    7.50 Hz,  1.00 % duty cycle
+26583 ms:  478.00 Hz, 50.00 % duty cycle
+26707 ms:    0.00 Hz,  0.00 % duty cycle
+26838 ms:    7.60 Hz,  0.80 % duty cycle
+26844 ms:  179.00 Hz, 50.00 % duty cycle
+26964 ms:    0.00 Hz,  0.00 % duty cycle
+27095 ms:    7.50 Hz,  2.10 % duty cycle
+27097 ms:  478.00 Hz, 50.00 % duty cycle
+27224 ms:    0.00 Hz,  0.00 % duty cycle
+27352 ms:    7.70 Hz,  0.80 % duty cycle
+27356 ms:  301.10 Hz, 50.00 % duty cycle
+27480 ms:    0.00 Hz,  0.00 % duty cycle
+27611 ms:    7.50 Hz,  1.20 % duty cycle
+27617 ms:  179.00 Hz, 50.00 % duty cycle
+27737 ms:    0.00 Hz,  0.00 % duty cycle
+27868 ms:    7.50 Hz,  2.10 % duty cycle
+27871 ms:  358.00 Hz, 50.00 % duty cycle
+27995 ms:    0.00 Hz,  0.00 % duty cycle
+28262 ms:    3.70 Hz,  0.50 % duty cycle
+28265 ms:  358.00 Hz, 50.00 % duty cycle
+28389 ms:    0.00 Hz,  0.00 % duty cycle
+28513 ms:    8.00 Hz,  1.10 % duty cycle
+28515 ms:  478.00 Hz, 50.00 % duty cycle
+28638 ms:    0.00 Hz,  0.00 % duty cycle
+28762 ms:    8.00 Hz,  0.80 % duty cycle
+28768 ms:  179.00 Hz, 50.00 % duty cycle
+28888 ms:    0.00 Hz,  0.00 % duty cycle
+29014 ms:    7.80 Hz,  2.20 % duty cycle
+29016 ms:  358.00 Hz, 50.00 % duty cycle
+29138 ms:    0.00 Hz,  0.00 % duty cycle
+29262 ms:    8.00 Hz,  1.10 % duty cycle
+29264 ms:  478.00 Hz, 50.00 % duty cycle
+29389 ms:    0.00 Hz,  0.00 % duty cycle
+29513 ms:    8.00 Hz,  0.80 % duty cycle
+29519 ms:  179.00 Hz, 50.00 % duty cycle
+29639 ms:    0.00 Hz,  0.00 % duty cycle
+29765 ms:    7.80 Hz,  2.20 % duty cycle
+29767 ms:  478.00 Hz, 50.00 % duty cycle
+29889 ms:    0.00 Hz,  0.00 % duty cycle
+30012 ms:    8.10 Hz,  0.80 % duty cycle
+30015 ms:  301.10 Hz, 50.00 % duty cycle
+30139 ms:    0.00 Hz,  0.00 % duty cycle
+30264 ms:    7.90 Hz,  1.30 % duty cycle
+30270 ms:  179.00 Hz, 50.00 % duty cycle
+30390 ms:    0.00 Hz,  0.00 % duty cycle
+30515 ms:    7.80 Hz,  2.20 % duty cycle
+30518 ms:  358.00 Hz, 50.00 % duty cycle
+30640 ms:    0.00 Hz,  0.00 % duty cycle
+30898 ms:    3.80 Hz,  0.50 % duty cycle
+30901 ms:  358.00 Hz, 50.00 % duty cycle
+31025 ms:    0.00 Hz,  0.00 % duty cycle
+31155 ms:    7.60 Hz,  1.10 % duty cycle
+31157 ms:  478.00 Hz, 50.00 % duty cycle
+
+Detected display events:
+    5 ms: " 8"
+   10 ms: "|   "
+  135 ms: "  "
+  370 ms: "|   "
+  490 ms: "8 "
+  495 ms: " 8"
+  500 ms: "88"
+  745 ms: "  "
+  750 ms: "|   "
+  885 ms: "  "
+ 1005 ms: "  | "
+ 1140 ms: "  "
+ 1470 ms: "|   "
+ 1595 ms: "  "
+ 1715 ms: "  | "
+ 1840 ms: "8 "
+ 1845 ms: " 8"
+ 1850 ms: "88"
+ 2096 ms: "  "
+ 2100 ms: "|   "
+ 2236 ms: "  "
+ 2356 ms: "  | "
+ 2491 ms: "  "
+ 2616 ms: "   |"
+ 2621 ms: "   |"
+ 2751 ms: "  "
+ 3071 ms: "|   "
+ 3196 ms: "  "
+ 3316 ms: "  | "
+ 3451 ms: "  "
+ 3566 ms: "   |"
+ 3571 ms: "   |"
+ 3691 ms: "8 "
+ 3696 ms: " 8"
+ 3701 ms: "88"
+ 3946 ms: "  "
+ 3951 ms: "|   "
+ 4086 ms: "  "
+ 4206 ms: "  | "
+ 4341 ms: "  "
+ 4466 ms: "   |"
+ 4471 ms: "   |"
+ 4601 ms: "  "
+ 4721 ms: "|   "
+ 4856 ms: "  "
+ 5171 ms: "|   "
+ 5296 ms: "  "
+ 5416 ms: "  | "
+ 5551 ms: "  "
+ 5666 ms: "   |"
+ 5671 ms: "   |"
+ 5801 ms: "  "
+ 5921 ms: "|   "
+ 6041 ms: "8 "
+ 6046 ms: " 8"
+ 6051 ms: "88"
+ 6296 ms: "  "
+ 6301 ms: "|   "
+ 6436 ms: "  "
+ 6556 ms: "  | "
+ 6691 ms: "  "
+ 6816 ms: "   |"
+ 6821 ms: "   |"
+ 6951 ms: "  "
+ 7071 ms: "|   "
+ 7206 ms: "  "
+ 7336 ms: "  | "
+ 7471 ms: "  "
+ 7771 ms: "|   "
+ 7896 ms: "  "
+ 8016 ms: "  | "
+ 8151 ms: "  "
+ 8266 ms: "   |"
+ 8271 ms: "   |"
+ 8401 ms: "  "
+ 8521 ms: "|   "
+ 8646 ms: "  "
+ 8766 ms: "  | "
+ 8891 ms: "8 "
+ 8896 ms: " 8"
+ 8901 ms: "88"
+ 9146 ms: "  "
+ 9151 ms: "|   "
+ 9286 ms: "  "
+ 9406 ms: "  | "
+ 9541 ms: "  "
+ 9666 ms: "   |"
+ 9671 ms: "   |"
+ 9801 ms: "  "
+ 9921 ms: "|   "
+10056 ms: "  "
+10186 ms: "  | "
+10321 ms: "  "
+10436 ms: "   |"
+10441 ms: "   |"
+10571 ms: "  "
+10871 ms: "|   "
+10996 ms: "  "
+11116 ms: "  | "
+11251 ms: "  "
+11366 ms: "   |"
+11371 ms: "   |"
+11501 ms: "  "
+11621 ms: "|   "
+11746 ms: "  "
+11866 ms: "  | "
+12001 ms: "  "
+12116 ms: "   |"
+12121 ms: "   |"
+12241 ms: "8 "
+12246 ms: " 8"
+12251 ms: "88"
+12496 ms: "  "
+12501 ms: "|   "
+12636 ms: "  "
+12756 ms: "  | "
+12891 ms: "  "
+13016 ms: "   |"
+13021 ms: "   |"
+13151 ms: "  "
+13271 ms: "|   "
+13406 ms: "  "
+13536 ms: "  | "
+13671 ms: "  "
+13786 ms: "   |"
+13791 ms: "   |"
+13921 ms: "  "
+14046 ms: "  | "
+14181 ms: "  "
+14471 ms: "|   "
+14596 ms: "  "
+14716 ms: "  | "
+14851 ms: "  "
+14966 ms: "   |"
+14971 ms: "   |"
+15101 ms: "  "
+15221 ms: "|   "
+15346 ms: "  "
+15466 ms: "  | "
+15601 ms: "  "
+15716 ms: "   |"
+15721 ms: "   |"
+15851 ms: "  "
+15966 ms: "  | "
+16091 ms: "8 "
+16096 ms: " 8"
+16101 ms: "88"
+16351 ms: "|   "
+16356 ms: "  "
+16486 ms: "  "
+16606 ms: "  | "
+16741 ms: "  "
+16866 ms: "   |"
+16871 ms: "   |"
+17001 ms: "  "
+17121 ms: "|   "
+17256 ms: "  "
+17386 ms: "  | "
+17521 ms: "  "
+17646 ms: "   |"
+17651 ms: "   |"
+17771 ms: "  "
+17896 ms: "  | "
+18031 ms: "  "
+18161 ms: " |  "
+18166 ms: " |  "
+18286 ms: "  "
+18571 ms: "|   "
+18696 ms: "  "
+18816 ms: "  | "
+18951 ms: "  "
+19066 ms: "   |"
+19071 ms: "   |"
+19201 ms: "  "
+19321 ms: "|   "
+19446 ms: "  "
+19566 ms: "  | "
+19701 ms: "  "
+19816 ms: "   |"
+19821 ms: "   |"
+19951 ms: "  "
+20066 ms: "  | "
+20201 ms: "  "
+20321 ms: " |  "
+20326 ms: " |  "
+20441 ms: "8 "
+20446 ms: " 8"
+20451 ms: "88"
+20696 ms: "  "
+20701 ms: "|   "
+20836 ms: "  "
+20956 ms: "  | "
+21091 ms: "  "
+21216 ms: "   |"
+21221 ms: "   |"
+21351 ms: "  "
+21471 ms: "|   "
+21606 ms: "  "
+21736 ms: "  | "
+21871 ms: "  "
+21986 ms: "   |"
+21991 ms: "   |"
+22121 ms: "  "
+22246 ms: "  | "
+22381 ms: "  "
+22511 ms: " |  "
+22516 ms: " |  "
+22636 ms: "  "
+22766 ms: "   |"
+22771 ms: "   |"
+22901 ms: "  "
+23171 ms: "|   "
+23296 ms: "  "
+23416 ms: "  | "
+23551 ms: "  "
+23666 ms: "   |"
+23671 ms: "   |"
+23801 ms: "  "
+23921 ms: "|   "
+24046 ms: "  "
+24166 ms: "  | "
+24301 ms: "  "
+24416 ms: "   |"
+24421 ms: "   |"
+24551 ms: "  "
+24666 ms: "  | "
+24801 ms: "  "
+24921 ms: " |  "
+24926 ms: " |  "
+25046 ms: "  "
+25166 ms: "   |"
+25171 ms: "   |"
+25291 ms: "8 "
+25296 ms: " 8"
+25301 ms: "88"
+25546 ms: "  "
+25551 ms: "|   "
+25686 ms: "  "
+25806 ms: "  | "
+25941 ms: "  "
+26066 ms: "   |"
+26071 ms: "   |"
+26201 ms: "  "
+26321 ms: "|   "
+26456 ms: "  "
+26586 ms: "  | "
+26721 ms: "  "
+26846 ms: "   |"
+26851 ms: "   |"
+26971 ms: "  "
+27096 ms: "  | "
+27231 ms: "  "
+27361 ms: " |  "
+27366 ms: " |  "
+27486 ms: "  "
+27616 ms: "   |"
+27621 ms: "   |"
+27751 ms: "  "
+27871 ms: "|   "
+28006 ms: "  "
+28271 ms: "|   "
+28396 ms: "  "
+28516 ms: "  | "
+28651 ms: "  "
+28766 ms: "   |"
+28771 ms: "   |"
+28901 ms: "  "
+29021 ms: "|   "
+29146 ms: "  "
+29266 ms: "  | "
+29401 ms: "  "
+29516 ms: "   |"
+29521 ms: "   |"
+29651 ms: "  "
+29766 ms: "  | "
+29901 ms: "  "
+30021 ms: " |  "
+30026 ms: " |  "
+30146 ms: "  "
+30266 ms: "   |"
+30271 ms: "   |"
+30401 ms: "  "
+30521 ms: "|   "
+30641 ms: "8 "
+30646 ms: " 8"
+30651 ms: "88"
+30896 ms: "  "
+30901 ms: "|   "
+31036 ms: "  "
+31156 ms: "  | "
+31291 ms: "  "
+
+[EVENT 1 - Simon] [PLAYBACK DELAY: 250 ms]
+PASS
+
+[EVENT 2 - User Input: (S1 (15 ms))]
+PASS
+
+[EVENT 3 - Simon]
+PASS
+
+[EVENT 4 - User Input: (S1 (15 ms), S3 (15 ms))]
+PASS
+
+[EVENT 5 - Simon]
+PASS
+
+[EVENT 6 - User Input: (S1 (15 ms), S3 (15 ms), S4 (15 ms))]
+PASS
+
+[EVENT 7 - Simon]
+PASS
+
+[EVENT 8 - User Input: (S1 (15 ms), S3 (15 ms), S4 (15 ms), S1 (15 ms))]
+PASS
+
+[EVENT 9 - Simon]
+PASS
+
+[EVENT 10 - User Input: (S1 (15 ms), S3 (15 ms), S4 (15 ms), S1 (15 ms), S3 (15 ms))]
+PASS
+
+[EVENT 11 - Simon]
+PASS
+
+[EVENT 12 - User Input: (S1 (15 ms), S3 (15 ms), S4 (15 ms), S1 (15 ms), S3 (15 ms), S4 (15 ms))]
+PASS
+
+[EVENT 13 - Simon]
+PASS
+
+[EVENT 14 - User Input: (S1 (15 ms), S3 (15 ms), S4 (15 ms), S1 (15 ms), S3 (15 ms), S4 (15 ms), S3 (15 ms))]
+PASS
+
+[EVENT 15 - Simon]
+PASS
+
+[EVENT 16 - User Input: (S1 (15 ms), S3 (15 ms), S4 (15 ms), S1 (15 ms), S3 (15 ms), S4 (15 ms), S3 (15 ms), S2 (15 ms))]
+PASS
+
+[EVENT 17 - Simon]
+PASS
+
+[EVENT 18 - User Input: (S1 (15 ms), S3 (15 ms), S4 (15 ms), S1 (15 ms), S3 (15 ms), S4 (15 ms), S3 (15 ms), S2 (15 ms), S4 (15 ms))]
+PASS
+
+[EVENT 19 - Simon]
+PASS
+
+[EVENT 20 - User Input: (S1 (15 ms), S3 (15 ms), S4 (15 ms), S1 (15 ms), S3 (15 ms), S4 (15 ms), S3 (15 ms), S2 (15 ms), S4 (15 ms), S1 (15 ms))]
+PASS

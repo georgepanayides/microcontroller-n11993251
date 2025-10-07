@@ -1,0 +1,139 @@
+Gameplay events:
+  350 ms: S1
+ 1450 ms: S2
+ 2855 ms: S4
+ 3955 ms: S4
+ 4205 ms: S2
+
+Detected buzzer events:
+    6 ms:  358.00 Hz, 50.00 % duty cycle
+  131 ms:    0.00 Hz,  0.00 % duty cycle
+  361 ms:    4.30 Hz,  0.60 % duty cycle
+  364 ms:  358.00 Hz, 50.00 % duty cycle
+  488 ms:    0.00 Hz,  0.00 % duty cycle
+  746 ms:    3.80 Hz,  0.50 % duty cycle
+  749 ms:  358.00 Hz, 50.00 % duty cycle
+  873 ms:    0.00 Hz,  0.00 % duty cycle
+ 1006 ms:    7.50 Hz,  1.00 % duty cycle
+ 1008 ms:  478.00 Hz, 50.00 % duty cycle
+ 1133 ms:    0.00 Hz,  0.00 % duty cycle
+ 1462 ms:    3.00 Hz,  0.30 % duty cycle
+ 1466 ms:  301.10 Hz, 50.00 % duty cycle
+ 1587 ms:    0.00 Hz,  0.00 % duty cycle
+ 2505 ms:    1.10 Hz,  0.20 % duty cycle
+ 2511 ms:  179.00 Hz, 50.00 % duty cycle
+ 2631 ms:    0.00 Hz,  0.00 % duty cycle
+ 2868 ms:    4.20 Hz,  1.20 % duty cycle
+ 2874 ms:  179.00 Hz, 50.00 % duty cycle
+ 2994 ms:    0.00 Hz,  0.00 % duty cycle
+ 3253 ms:    3.80 Hz,  1.10 % duty cycle
+ 3259 ms:  179.00 Hz, 50.00 % duty cycle
+ 3379 ms:    0.00 Hz,  0.00 % duty cycle
+ 3510 ms:    7.50 Hz,  2.10 % duty cycle
+ 3513 ms:  358.00 Hz, 50.00 % duty cycle
+ 3637 ms:    0.00 Hz,  0.00 % duty cycle
+ 3968 ms:    3.00 Hz,  0.40 % duty cycle
+ 3974 ms:  179.00 Hz, 50.00 % duty cycle
+ 4094 ms:    0.00 Hz,  0.00 % duty cycle
+ 4220 ms:    7.80 Hz,  2.20 % duty cycle
+ 4223 ms:  301.10 Hz, 50.00 % duty cycle
+ 4344 ms:    0.00 Hz,  0.00 % duty cycle
+
+Detected display events:
+    5 ms: " 8"
+   10 ms: "|   "
+  135 ms: "  "
+  370 ms: "|   "
+  490 ms: "8 "
+  495 ms: " 8"
+  500 ms: "88"
+  745 ms: "  "
+  750 ms: "|   "
+  885 ms: "  "
+ 1005 ms: "  | "
+ 1140 ms: "  "
+ 1470 ms: " |  "
+ 1475 ms: " |  "
+ 1590 ms: "- "
+ 1595 ms: " -"
+ 1600 ms: "--"
+ 1845 ms: " 2"
+ 1850 ms: "  "
+ 1855 ms: " 2"
+ 2110 ms: "  "
+ 2506 ms: "   |"
+ 2511 ms: "   |"
+ 2641 ms: "  "
+ 2876 ms: "   |"
+ 2881 ms: "   |"
+ 2996 ms: " 8"
+ 3001 ms: "8 "
+ 3006 ms: "88"
+ 3251 ms: "  "
+ 3256 ms: "   |"
+ 3261 ms: "   |"
+ 3391 ms: "  "
+ 3511 ms: "|   "
+ 3646 ms: "  "
+ 3976 ms: "   |"
+ 3981 ms: "   |"
+ 4101 ms: "  "
+ 4221 ms: " |  "
+ 4226 ms: " |  "
+ 4346 ms: " -"
+ 4351 ms: "- "
+ 4356 ms: "--"
+ 4601 ms: "  "
+ 4606 ms: " 2"
+ 4611 ms: " 2"
+ 4871 ms: "  "
+
+[EVENT 1 - Simon] [PLAYBACK DELAY: 250 ms]
+PASS. Buzzer produced a 358.10 Hz tone at 6 ms for a duration of 124 ms.
+PASS. Display produced "|   " at 10 ms for a duration of 125 ms.
+
+[EVENT 2 - User Input: (S1 (15 ms))]
+PASS. Buzzer produced a 358.10 Hz tone at 364 ms for a duration of 124 ms.
+PASS. Display produced "|   " at 370 ms for a duration of 130 ms.
+      [INPUT SEQUENCE CORRECT]
+PASS. Display produced "88" at 500 ms for a duration of 250 ms.
+
+[EVENT 3 - Simon]
+PASS. Buzzer produced a 358.10 Hz tone at 749 ms for a duration of 124 ms.
+PASS. Buzzer produced a 478.00 Hz tone at 1008 ms for a duration of 124 ms.
+PASS. Display produced "|   " at 750 ms for a duration of 135 ms.
+PASS. Display produced "  | " at 1005 ms for a duration of 135 ms.
+
+[EVENT 4 - User Input: (S2 (15 ms))]
+PASS. Buzzer produced a 301.12 Hz tone at 1466 ms for a duration of 121 ms.
+PASS. Display produced " |  " at 1475 ms for a duration of 125 ms.
+      [INPUT SEQUENCE INCORRECT]
+PASS. Display produced "--" at 1600 ms for a duration of 255 ms.
+PASS. Display produced " 2" at 1855 ms for a duration of 255 ms.
+PASS. Display produced "  " at 2110 ms for a duration of 255 ms.
+
+[EVENT 5 - Simon]
+PASS. Buzzer produced a 179.05 Hz tone at 2511 ms for a duration of 120 ms.
+PASS. Display produced "   |" at 2511 ms for a duration of 130 ms.
+
+[EVENT 6 - User Input: (S4 (15 ms))]
+PASS. Buzzer produced a 179.05 Hz tone at 2874 ms for a duration of 120 ms.
+PASS. Display produced "   |" at 2881 ms for a duration of 125 ms.
+      [INPUT SEQUENCE CORRECT]
+PASS. Display produced "88" at 3006 ms for a duration of 255 ms.
+
+[EVENT 7 - Simon]
+PASS. Buzzer produced a 179.05 Hz tone at 3259 ms for a duration of 120 ms.
+PASS. Buzzer produced a 358.10 Hz tone at 3513 ms for a duration of 124 ms.
+PASS. Display produced "   |" at 3261 ms for a duration of 130 ms.
+PASS. Display produced "|   " at 3511 ms for a duration of 135 ms.
+
+[EVENT 8 - User Input: (S4 (15 ms), S2 (15 ms))]
+PASS. Buzzer produced a 179.05 Hz tone at 3974 ms for a duration of 120 ms.
+PASS. Buzzer produced a 301.12 Hz tone at 4223 ms for a duration of 121 ms.
+PASS. Display produced "   |" at 3981 ms for a duration of 120 ms.
+PASS. Display produced " |  " at 4226 ms for a duration of 130 ms.
+      [INPUT SEQUENCE INCORRECT]
+PASS. Display produced "--" at 4356 ms for a duration of 255 ms.
+PASS. Display produced " 2" at 4611 ms for a duration of 260 ms.
+PASS. Display produced "  " at 4871 ms for a duration of 260 ms.

@@ -1,0 +1,20 @@
+Gameplay events:
+  350 ms: S1
+  360 ms: S2
+
+Detected buzzer events:
+    6 ms:  358.00 Hz, 50.00 % duty cycle
+  131 ms:    0.00 Hz,  0.00 % duty cycle
+
+Detected display events:
+    5 ms: " 8"
+   10 ms: "|   "
+  135 ms: "  "
+
+[EVENT 1 - Simon] [PLAYBACK DELAY: 250 ms]
+PASS. Buzzer produced a 358.10 Hz tone at 6 ms for a duration of 124 ms.
+PASS. Display produced "|   " at 10 ms for a duration of 125 ms.
+
+[EVENT 2 - User Input: (S1 (10 ms))]
+PASS. Buzzer did not produce a tone after switch bounce was simulated on pushbutton S1.
+PASS. Display did not produce a pattern after switch bounce was simulated on pushbutton S1.
