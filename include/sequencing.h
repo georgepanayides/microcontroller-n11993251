@@ -7,6 +7,9 @@
 void sequencing_init(uint32_t seed);
 extern const uint16_t step_freq[4];
 
+/* Save/restore LFSR state (for regenerating sequences without storing steps) */
+uint32_t sequencing_save_state(void);
+void sequencing_restore_state(uint32_t state);
 
 /* Generate next step in [0..3]. */
 uint8_t sequencing_next_step(void);

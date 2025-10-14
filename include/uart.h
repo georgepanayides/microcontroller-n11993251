@@ -4,13 +4,18 @@
 #include <stdint.h>
 
 /* ----- Low-level driver ----- */
-void uart_init_9600_8n1(void);          /* PB2=TXD, PB3=RXD, 20MHz F_CPU */
+void uart_init_9600_8n1(void);          /* PB2=TXD, PB3=RXD, ~3.33 MHz F_CPU */
 int  uart_getc_nonblock(void);          /* returns -1 if no byte */
 void uart_putc(char c);
 void uart_puts(const char *s);
 void uart_put_u16_dec(uint16_t v);      /* decimal ASCII, no leading zeros */
+void uart_put_u32_dec(uint32_t v);      /* decimal ASCII, no leading zeros */
+void uart_put_hex8(uint8_t v);          /* 2-digit hex (00-FF) */
 /* Apply current persistent frequency offset (retained until RESET). */
 uint16_t uart_apply_freq_offset(uint16_t base_hz);
+
+/* Debug helper */
+void uart_debug_octave(void);
 
 /* ----- Game command layer ----- */
 /* You call this often (each loop + inside any 1ms polling windows) */

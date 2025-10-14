@@ -12,7 +12,7 @@
 #define USE_SPI0_PORTC_ALT1 1
 /* ---------------------------------------------------------------------------- */
 
-/* 20 MHz, no prescaler */
+/* Optional: 20 MHz clock initialization (not used with default 3.33 MHz config) */
 void clock_init_20mhz(void) {
     // Disable prescaler: PDIV=DIV1, PEN=0
     ccp_write_io((void *)&CLKCTRL.MCLKCTRLB, 0x00);
@@ -22,7 +22,8 @@ void clock_init_20mhz(void) {
 /* Simple GPIO init: latch as output and low */
 void gpio_init(void) {
     DISP_LATCH_PORT.DIRSET = DISP_LATCH_PIN_bm;
-    DISP_LATCH_PORT.OUTCLR = DISP_LATCH_PIN_bm;
+    /* Idle latch HIGH; ISR will create a low->high (or high->low->high) pulse */
+    DISP_LATCH_PORT.OUTSET = DISP_LATCH_PIN_bm;
 }
 
 /* SPI0 host for the 74HC595 (mode 0, safe baud) */
@@ -39,9 +40,10 @@ void spi_init_for_display(void) {
     /* Default map is on PORTA (PA0..PA3) — set DIRs similarly if you use it */
 #endif
 
-    /* SPI0: enable, host, mode 0, prescaler /16 (≈1.25 MHz at 20 MHz F_CPU) */
-    SPI0.CTRLA = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_PRESC_DIV16_gc;
+    /* SPI0: enable, host, mode 0, prescaler /4 (faster like demos), interrupt on complete */
+    SPI0.CTRLA = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_PRESC_DIV4_gc;
     SPI0.CTRLB = SPI_MODE_0_gc | SPI_SSD_bm; /* ignore SS input in host mode */
+    SPI0.INTCTRL = SPI_IE_bm;                /* interrupt enable on transfer complete */
 }
 
 /* ---------------- Buzzer / TCA0 base setup ---------------- */

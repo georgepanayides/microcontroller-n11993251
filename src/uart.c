@@ -4,7 +4,7 @@
 #include "buttons.h"    /* buttons_inject() */
 #include "sequencing.h" /* extern const uint16_t step_freq[4] */
 
-/* ============ Low-level USART0 @ 20MHz, 9600-8N1 ============ */
+/* ============ Low-level USART0 @ 3.33MHz, 9600-8N1 ============ */
 void uart_init_9600_8n1(void)
 {
     /* PB2=TXD out, PB3=RXD in */
@@ -14,11 +14,11 @@ void uart_init_9600_8n1(void)
     /* Default route (PB2/PB3) */
     /* PORTMUX.USARTROUTEA default 0 -> USART0 on PORTB */
 
-    /* 9600 baud @ 20 MHz, normal 16x oversampling:
+    /* 9600 baud @ 3.33 MHz, normal 16x oversampling:
        BAUD = (F_PER * 64) / (16 * baud)
-       -> (20,000,000 * 64) / (16 * 9600) = 8,333.33 -> 8333
+       -> (3,333,333 * 64) / (16 * 9600) = 1389
     */
-    USART0.BAUD = 8333;
+    USART0.BAUD = 1389;
 
     USART0.CTRLC = USART_CMODE_ASYNCHRONOUS_gc
                  | USART_PMODE_DISABLED_gc
@@ -59,18 +59,51 @@ void uart_put_u16_dec(uint16_t v)
     uart_puts(p);
 }
 
+void uart_put_u32_dec(uint32_t v)
+{
+    char buf[11];   /* max "4294967295" + NUL */
+    char *p = &buf[10];
+    *p = '\0';
+    do {
+        *--p = (char)('0' + (v % 10));
+        v /= 10;
+    } while (v);
+    uart_puts(p);
+}
+
+void uart_put_hex8(uint8_t v)
+{
+    static const char hex[] = "0123456789ABCDEF";
+    uart_putc(hex[(v >> 4) & 0x0F]);
+    uart_putc(hex[v & 0x0F]);
+}
+
 /* ================= Game command layer ================= */
 
 /* live/global command state */
 static volatile uint8_t  g_cmd_reset = 0;
 static volatile uint8_t  g_seed_pending = 0;
 static volatile uint32_t g_seed_value = 0;
-static volatile int16_t  g_freq_offset = 0;   /* retained until RESET */
+static volatile int8_t   g_octave_offset = 0;   /* retained until RESET: -3..+6 range */
 
 uint16_t uart_apply_freq_offset(uint16_t base_hz)
 {
-    int32_t f = (int32_t)base_hz + g_freq_offset;
-    if (f < 1) f = 1;
+    /* Apply octave shift: multiply/divide by powers of 2 
+       Octave offset can be -3 to +6 to keep frequencies in 20 Hz - 20 kHz range */
+    int32_t f = (int32_t)base_hz;
+    
+    if (g_octave_offset > 0) {
+        /* Shift up: multiply by 2^octave_offset */
+        f = f << g_octave_offset;
+    } else if (g_octave_offset < 0) {
+        /* Shift down: divide by 2^(-octave_offset) */
+        f = f >> (-g_octave_offset);
+    }
+    
+    /* Clamp to human hearing range: 20 Hz to 20 kHz */
+    if (f < 20) f = 20;
+    if (f > 20000) f = 20000;
+    
     return (uint16_t)f;
 }
 
@@ -81,6 +114,20 @@ uint8_t uart_take_reset_and_clear(void)
 
 uint8_t uart_seed_pending(void) { return g_seed_pending; }
 uint32_t uart_take_seed(void) { g_seed_pending = 0; return g_seed_value; }
+
+/* Debug helper: print current octave offset */
+void uart_debug_octave(void)
+{
+    uart_puts("OCT: ");
+    if (g_octave_offset < 0) {
+        uart_putc('-');
+        uart_put_u16_dec((uint16_t)(-g_octave_offset));
+    } else {
+        uart_putc('+');
+        uart_put_u16_dec((uint16_t)g_octave_offset);
+    }
+    uart_putc('\n');
+}
 
 /* small helpers */
 static inline uint8_t is_hex_lower(char c) { return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'); }
@@ -100,14 +147,23 @@ static inline uint8_t is_dec(int c) { return (c == '.' || c == 'l'); }
 static inline uint8_t is_reset(int c){ return (c == '0' || c == 'p'); }
 static inline uint8_t is_seed(int c) { return (c == '9' || c == 'o'); }
 
-/* While buzzer is active, INC/DEC retunes immediately by ±1 Hz (spec: immediate). */
-static inline void nudge_live_frequency(uint16_t *active_hz, int8_t delta)
+/* While buzzer is active, INC/DEC adjusts octave offset and retunes immediately. */
+static void nudge_live_frequency(uint8_t c)
 {
-    if (*active_hz == 0) return;               /* no tone right now */
-    int32_t f = (int32_t)(*active_hz) + delta;
-    if (f < 1) f = 1;
-    *active_hz = (uint16_t)f;
-    buzzer_start_hz(*active_hz);               /* retune now */
+    if (is_inc(c)) {
+        /* INC FREQ: Shift up one octave (multiply by 2) 
+           Max offset = +5 to keep 451 Hz * 2^5 = 14432 Hz < 20 kHz */
+        if (g_octave_offset < 5) {
+            g_octave_offset++;
+        }
+    } else if (is_dec(c)) {
+        /* DEC FREQ: Shift down one octave (divide by 2)
+           Min offset = -3 to keep 169 Hz / 2^3 = 21.125 Hz > 20 Hz */
+        if (g_octave_offset > -3) {
+            g_octave_offset--;
+        }
+    }
+    /* else ignore */
 }
 
 /* Poll and interpret commands.
@@ -147,16 +203,20 @@ void uart_poll_commands(uint8_t game_state, uint16_t last_base_hz, uint16_t *act
         if (is_s_key(c, &idx)) {
             buttons_inject(idx);               /* inject into same FIFO as buttons */
         } else if (is_inc(c)) {
-            if (*active_hz == 0 && last_base_hz != 0) *active_hz = uart_apply_freq_offset(last_base_hz);
-            nudge_live_frequency(active_hz, +1);
-            g_freq_offset += 1;                /* persist */
+            nudge_live_frequency(c);
+            /* If tone is currently playing, retune it immediately */
+            if (last_base_hz != 0) {
+                *active_hz = uart_apply_freq_offset(last_base_hz);
+            }
         } else if (is_dec(c)) {
-            if (*active_hz == 0 && last_base_hz != 0) *active_hz = uart_apply_freq_offset(last_base_hz);
-            nudge_live_frequency(active_hz, -1);
-            g_freq_offset -= 1;                /* persist */
+            nudge_live_frequency(c);
+            /* If tone is currently playing, retune it immediately */
+            if (last_base_hz != 0) {
+                *active_hz = uart_apply_freq_offset(last_base_hz);
+            }
         } else if (is_reset(c)) {
             g_cmd_reset = 1;
-            g_freq_offset = 0;
+            g_octave_offset = 0;
         } else if (is_seed(c)) {
             seed_collecting = 1;
             seed_count = 0;
@@ -165,6 +225,7 @@ void uart_poll_commands(uint8_t game_state, uint16_t last_base_hz, uint16_t *act
             /* ignore anything else per spec */
         }
     }
+
 }
 
 /* Print during patterns (call while you multiplex the digits) */

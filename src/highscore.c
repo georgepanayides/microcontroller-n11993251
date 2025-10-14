@@ -90,7 +90,7 @@ void highscore_prompt_and_store(uint16_t score) {
     hs_uart_puts("Enter name: ");
 
     /* timers: 5s total if no input; else 5s since last char */
-    const uint32_t TOUT_MS = 50000;
+    const uint32_t TOUT_MS = 5000;
     uint32_t t_start = millis();
     uint32_t t_last  = t_start;
 

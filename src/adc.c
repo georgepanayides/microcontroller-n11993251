@@ -17,6 +17,13 @@ void adc_init_pot_8bit(void)
     ADC0.CTRLA = ADC_ENABLE_bm;             /* enable ADC */
     /* 8-bit single-ended, start immediately (free-run keeps it going) */
     ADC0.COMMAND = ADC_MODE_SINGLE_8BIT_gc | ADC_START_IMMEDIATE_gc;
+
+    /* Warm-up: discard a few initial samples so first read is valid */
+    for (uint8_t i = 0; i < 4; i++) {
+        while ((ADC0.INTFLAGS & ADC_RESRDY_bm) == 0) { /* wait */ }
+        (void)ADC0.RESULT0;
+        ADC0.INTFLAGS = ADC_RESRDY_bm;
+    }
 }
 
 uint8_t adc_read8(void)

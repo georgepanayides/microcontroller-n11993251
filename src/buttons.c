@@ -1,20 +1,26 @@
 #include "buttons.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include "timer.h"  /* for millis() timestamping */
 
 #ifndef F_CPU
-#  define F_CPU 20000000UL
+#  define F_CPU 3333333UL  /* Default QUTy platform clock */
 #endif
 
-/* ----------- Pins (PA4..PA7) map to indices 0..3 ----------- */
+/* ----------- Logical indices 0..3 map to S1..S4 on PA4..PA7 ----------- */
+/* QUTy hardware: S1=PA4, S2=PA5, S3=PA6, S4=PA7 (left to right) */
 static inline uint8_t mask_for_idx(uint8_t idx) {
     static const uint8_t m[4] = { PIN4_bm, PIN5_bm, PIN6_bm, PIN7_bm };
     return (idx < 4) ? m[idx] : 0;
 }
 
-/* ----------- Debouncer state (Ganssle 2-bit vertical counter) ----------- */
+/* ----------- Debouncer state (require 3 consecutive samples ≈ 15 ms) ----------- */
 static volatile uint8_t debounced_state = (PIN4_bm|PIN5_bm|PIN6_bm|PIN7_bm); /* 1=not pressed (pull-up) */
-static uint8_t ct0, ct1;
+/* Per-button counters for consecutive samples differing from debounced_state */
+static uint8_t diff_count[4]; /* indices correspond to S1..S4 */
+/* Track candidate press timing to robustly accept 15 ms taps regardless of sampling phase */
+static uint8_t pending_press[4];
+static uint32_t pending_t0[4];
 
 /* ----------- Tiny FIFO for press events (falling edges) ----------- */
 #define QSZ 8u
@@ -65,17 +71,16 @@ void buttons_init(void)
     /* Prime debounced state with current input */
     debounced_state = PORTA.IN & (PIN4_bm|PIN5_bm|PIN6_bm|PIN7_bm);
 
-    /* TCB1: periodic interrupt every 5 ms
-       Use CLK_PER/2 -> 10 MHz at 20 MHz F_CPU
-       CCMP = 10,000,000 * 0.005 - 1 = 49,999
-    */
-    TCB1.CTRLA   = 0;                       /* disable while configuring */
-    TCB1.CNT     = 0;
-    TCB1.CCMP    = 49999;
-    TCB1.CTRLB   = TCB_CNTMODE_INT_gc;      /* Periodic interrupt mode */
-    TCB1.INTFLAGS = TCB_CAPT_bm;            /* clear */
-    TCB1.INTCTRL  = TCB_CAPT_bm;            /* enable IRQ */
-    TCB1.CTRLA   = TCB_ENABLE_bm | TCB_CLKSEL_DIV2_gc;
+     /* TCB1: periodic interrupt every 5 ms using CLK_PER (no divider)
+         Demo-equivalent timing: CCMP = 3,333,333 * 0.005 ≈ 16667
+     */
+     TCB1.CTRLA   = 0;                       /* disable while configuring */
+     TCB1.CNT     = 0;
+     TCB1.CCMP    = 16667;                   /* 5ms at nominal 3.333 MHz */
+     TCB1.CTRLB   = TCB_CNTMODE_INT_gc;      /* Periodic interrupt mode */
+     TCB1.INTFLAGS = TCB_CAPT_bm;            /* clear */
+     TCB1.INTCTRL  = TCB_CAPT_bm;            /* enable IRQ */
+     TCB1.CTRLA   = TCB_ENABLE_bm;           /* CLK_PER, enable (no DIV) */
 }
 
 /* ----------- 5 ms debouncer ISR: detect falling edges -> enqueue ----------- */
@@ -84,22 +89,63 @@ ISR(TCB1_INT_vect)
     /* Read raw pins, keep only PA4..PA7 */
     uint8_t sample = PORTA.IN & (PIN4_bm|PIN5_bm|PIN6_bm|PIN7_bm);
 
-    uint8_t delta = sample ^ debounced_state;      /* bits that changed since last stable */
-    ct0 = ~(ct0 & delta);
-    ct1 =  (ct1 ^ ct0) & delta;
-    uint8_t toggle = delta & ct0 & ct1;
+    /* For each button, if the raw sample differs from debounced, increment its
+       diff counter; else reset. When counter reaches 3 (≈15 ms), accept change. */
+    for (uint8_t idx = 0; idx < 4; idx++) {
+        uint8_t mask = mask_for_idx(idx);
+        uint8_t raw_bit = (sample & mask);
+        uint8_t deb_bit = (debounced_state & mask);
 
-    if (toggle) {
-        debounced_state ^= toggle;                 /* commit new stable bits */
-
-        /* Falling edges are those that toggled and are now 0 (pressed) */
-        uint8_t falling = toggle & ~debounced_state;
-
-        if (falling & PIN4_bm) buttons_enqueue(0); /* S1 */
-        if (falling & PIN5_bm) buttons_enqueue(1); /* S2 */
-        if (falling & PIN6_bm) buttons_enqueue(2); /* S3 */
-        if (falling & PIN7_bm) buttons_enqueue(3); /* S4 */
+        if ((raw_bit != 0) != (deb_bit != 0)) {
+            /* differs from debounced */
+            if (raw_bit == 0) {
+                /* Candidate press (active-low) */
+                if (!pending_press[idx]) {
+                    pending_press[idx] = 1;
+                    pending_t0[idx] = millis();
+                }
+                if (diff_count[idx] < 3) diff_count[idx]++;
+                if (diff_count[idx] >= 3) {
+                    /* Commit new stable press */
+                    debounced_state &= (uint8_t)~mask; /* pressed (0) */
+                    buttons_enqueue(idx); /* enqueue falling edge */
+                    diff_count[idx] = 0;
+                    pending_press[idx] = 0; /* consumed */
+                }
+            } else {
+                /* raw returned high (release) while differing from debounced */
+                if (deb_bit != 0) {
+                    /* We were not committed pressed; treat as short tap candidate */
+                    if (pending_press[idx]) {
+                        uint32_t dt = millis() - pending_t0[idx];
+                        if (dt >= 12u) {
+                            /* Accept as a valid quick tap despite not hitting 3 samples */
+                            buttons_enqueue(idx);
+                        }
+                        pending_press[idx] = 0;
+                    }
+                    diff_count[idx] = 0; /* cancel pending change */
+                    /* debounced stays released */
+                } else {
+                    /* We were committed pressed (deb_bit==0), now transitioning to release */
+                    if (diff_count[idx] < 3) diff_count[idx]++;
+                    if (diff_count[idx] >= 3) {
+                        debounced_state |= mask;  /* commit release (1) */
+                        diff_count[idx] = 0;
+                        /* no enqueue on release */
+                    }
+                }
+            }
+        } else {
+            /* same as debounced: reset counter */
+            diff_count[idx] = 0;
+            if (raw_bit != 0) pending_press[idx] = 0; /* clear pending if line is high */
+        }
     }
+
+    /* Also multiplex the 7-seg every 5 ms (matches demos) */
+    extern void display_multiplex(void);
+    display_multiplex();
 
     TCB1.INTFLAGS = TCB_CAPT_bm;                   /* ack */
 }
