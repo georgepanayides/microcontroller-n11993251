@@ -9,18 +9,10 @@
 #include "sequencing.h"
 #include "buttons.h"
 #include "adc.h"
-#include "uart.h"
-#include "highscore.h"
-
-// UART button simulation flags
-volatile uint8_t uart_s1 = 0, uart_s2 = 0, uart_s3 = 0, uart_s4 = 0;
 
 static void state_machine(void);
 
-#define STEP_DELAY_MS     1200
-#define ROUND_PAUSE_MS    1200
-#define SUCCESS_TONE_HZ   1200
-#define FAIL_TONE_HZ       400
+#define FAIL_TONE_HZ 400
 
 static uint8_t digit_mask(uint8_t d)
 {
@@ -38,7 +30,7 @@ static uint8_t digit_mask(uint8_t d)
     }
 }
 
-static void display_score_decimal_for(uint16_t score, uint16_t ms)
+static void display_score(uint16_t score, uint16_t ms)
 {
     extern volatile uint16_t elapsed_time;
     uint8_t show = (uint8_t)(score % 100);
@@ -57,7 +49,7 @@ int main(void)
     gpio_init();
     spi_init_for_display();
     tcb0_init_1ms();
-    uart_init_9600_8n1();
+    // uart_init_9600_8n1();  // DISABLED for debugging
     buttons_init();
     display_init();
     buzzer_init();
@@ -69,41 +61,47 @@ int main(void)
     while (1) {}
 }
 
-static void echo_button(uint8_t b, uint16_t playback_delay_ms)
+static void enable_outputs(uint8_t step_index)
 {
     extern const uint16_t step_freq[4];
-    extern volatile uint16_t elapsed_time;
     
-    // Start echo immediately
-    uint16_t freq = uart_apply_freq_offset(step_freq[b]);
-    buzzer_start_hz(freq);
-    
-    if (b < 2) {
-        display_set((b == 0) ? (DISP_SEG_E & DISP_SEG_F) : (DISP_SEG_B & DISP_SEG_C), DISP_OFF);
-    } else {
-        display_set(DISP_OFF, (b == 2) ? (DISP_SEG_E & DISP_SEG_F) : (DISP_SEG_B & DISP_SEG_C));
+    switch (step_index) {
+        case 0: display_set(DISP_BAR_LEFT, DISP_OFF); break;
+        case 1: display_set(DISP_BAR_RIGHT, DISP_OFF); break;
+        case 2: display_set(DISP_OFF, DISP_BAR_LEFT); break;
+        case 3: display_set(DISP_OFF, DISP_BAR_RIGHT); break;
     }
     
-    // Calculate minimum duration (50% of playback delay)
-    uint16_t min_duration = playback_delay_ms / 2;
-    elapsed_time = 0;
-    while (elapsed_time < min_duration) {}
-    
+    buzzer_start_hz(step_freq[step_index]);
+}
+
+static void disable_outputs(void)
+{
     buzzer_stop();
     display_blank();
 }
 
-static void state_machine(void)
+static void echo_button(uint8_t b)
 {
     extern volatile uint16_t elapsed_time;
+    
+    enable_outputs(b);
+    elapsed_time = 0;
+    while (elapsed_time < 125) {}
+    disable_outputs();
+}
+
+static void state_machine(void)
+{
+    extern const uint16_t step_freq[4];
     typedef enum { GS_WAIT_START, GS_PLAYBACK, GS_INPUT, GS_FAIL } game_state_t;
     
     static uint32_t round_start_state = 0;
     static uint8_t len = 0;
     static uint8_t i = 0;
-    static uint16_t current_step_delay_ms = STEP_DELAY_MS;
+    static uint16_t current_step_delay_ms = 1200;
+    static uint8_t played_steps[64];
     
-    // Button edge detection variables
     uint8_t pb_state = 0xFF;
     uint8_t pb_state_r = 0xFF;
     uint8_t pb_changed, pb_falling;
@@ -111,7 +109,6 @@ static void state_machine(void)
     game_state_t gs = GS_PLAYBACK;
 
     while (1) {
-        // Button edge detection 
         pb_state_r = pb_state;
         pb_state = buttons_get_debounced_state();
         pb_changed = pb_state_r ^ pb_state;
@@ -121,79 +118,56 @@ static void state_machine(void)
         case GS_WAIT_START:
             display_blank();
             buzzer_stop();
-            // Check for any button press (falling edge) or UART command 
-            if ((pb_falling & (PIN4_bm | PIN5_bm | PIN6_bm | PIN7_bm)) || 
-                uart_s1 || uart_s2 || uart_s3 || uart_s4) { 
-                // Clear UART flags
-                uart_s1 = uart_s2 = uart_s3 = uart_s4 = 0;
+            if (pb_falling & (PIN4_bm | PIN5_bm | PIN6_bm | PIN7_bm)) {
                 len = 0; 
                 gs = GS_PLAYBACK; 
             }
             break;
 
         case GS_PLAYBACK: {
-            if (len == 0 && uart_seed_pending()) {
-                sequencing_init(uart_take_seed());
-            }
             if (len == 0) {
+                // Only save state at start of new game, not after failure
                 round_start_state = sequencing_save_state();
             }
             len++;
             
-            // Get playback delay from pot
             uint8_t pot = adc_read8();
             current_step_delay_ms = playback_delay_ms_from_adc8(pot);
             
-            // Play Simon sequence
             sequencing_restore_state(round_start_state);
             for (uint8_t j = 0; j < len; j++) {
                 uint8_t step = sequencing_next_step();
                 play_step(step, current_step_delay_ms);
+                if (j < sizeof(played_steps)) played_steps[j] = step;
             }
             
+            sequencing_restore_state(round_start_state);
             i = 0;
-            elapsed_time = 0;
-            while (elapsed_time < 5) {}  // Brief pause
+            pb_state = buttons_get_debounced_state();
+            pb_state_r = pb_state;
             gs = GS_INPUT;
-            break; }
-
+            break; }        
+            
         case GS_INPUT: {
-            // Check for button press (falling edge) or UART command
             int8_t b = -1;
-            if ((pb_falling & PIN4_bm) || uart_s1) { b = 0; uart_s1 = 0; }
-            else if ((pb_falling & PIN5_bm) || uart_s2) { b = 1; uart_s2 = 0; }
-            else if ((pb_falling & PIN6_bm) || uart_s3) { b = 2; uart_s3 = 0; }
-            else if ((pb_falling & PIN7_bm) || uart_s4) { b = 3; uart_s4 = 0; }
+            if (pb_falling & PIN4_bm) b = 0;
+            else if (pb_falling & PIN5_bm) b = 1;
+            else if (pb_falling & PIN6_bm) b = 2;
+            else if (pb_falling & PIN7_bm) b = 3;
             
             if (b < 0) break;
-            
-            // Check if input matches expected step
-            uint32_t keep = sequencing_save_state();
-            sequencing_restore_state(round_start_state);
-            uint8_t expected = 0;
-            for (uint8_t j = 0; j <= i; j++) {
-                expected = sequencing_next_step();
-            }
-            sequencing_restore_state(keep);
-            
-            // Calculate playback delay based on current level and potentiometer
-            uint8_t pot = adc_read8();
-            uint16_t playback_delay = (uint16_t)(250 + ((pot * 1750UL) / 255));
-            
-            // Echo the button press with proper duration tracking
-            echo_button((uint8_t)b, playback_delay);
-            
+
+            echo_button((uint8_t)b);
+
+            uint8_t expected = (i < sizeof(played_steps)) ? played_steps[i] : 0xFF;
+
             if ((uint8_t)b == expected) {
                 i++;
                 if (i == len) {
-                    // Success 
-                    uart_game_success(len);
                     display_set(DISP_ON, DISP_ON);
                     elapsed_time = 0;
                     while (elapsed_time < current_step_delay_ms) {}
                     display_blank();
-                    elapsed_time = 0;
-                    while (elapsed_time < ROUND_PAUSE_MS) {}
                     gs = GS_PLAYBACK;
                 }
             } else {
@@ -202,23 +176,25 @@ static void state_machine(void)
             break; }
 
         case GS_FAIL: {
-            // Show fail pattern and score
-            uart_game_over(len);
             display_set(DISP_DASH, DISP_DASH);
             buzzer_start_hz(FAIL_TONE_HZ);
             elapsed_time = 0;
             while (elapsed_time < current_step_delay_ms) {}
             buzzer_stop();
+            display_score(len, current_step_delay_ms);
             display_blank();
-            
-            display_score_decimal_for(len, current_step_delay_ms);
             elapsed_time = 0;
             while (elapsed_time < current_step_delay_ms) {}
             
-            if (highscore_qualifies(len)) {
-                highscore_prompt_and_store(len);
+            // Advance LFSR past the sequence we just played
+            sequencing_restore_state(round_start_state);
+            for (uint8_t j = 0; j < len; j++) {
+                sequencing_next_step();  // Advance past the sequence we just played
             }
-            // Clear any pending button state when returning to start
+            // The LFSR is now positioned at the next step for the new game
+            
+            len = 0;
+            display_blank();  // Ensure display is clear before new round
             gs = GS_WAIT_START;
             break; }
         }

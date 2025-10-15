@@ -10,11 +10,6 @@
 /* Route SPI0 to PORTC */
 #define USE_SPI0_PORTC_ALT1 1
 
-/* 20 MHz clock initialization */
-void clock_init_20mhz(void) {
-    ccp_write_io((void *)&CLKCTRL.MCLKCTRLB, 0x00);
-}
-
 /* GPIO init: latch as output */
 void gpio_init(void) {
     DISP_LATCH_PORT.DIRSET = DISP_LATCH_PIN_bm;

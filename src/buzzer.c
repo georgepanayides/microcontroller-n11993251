@@ -48,43 +48,20 @@ void buzzer_init(void) {
 void buzzer_start_hz(uint16_t hz) {
     tca0_enable_if_needed();
     if (hz == 0) { 
-        TCA0.SINGLE.CMP0 = 0; 
+        TCA0.SINGLE.CMP0BUF = 0; 
         return; 
     }
 
     uint16_t per, cmp;
     tca_calc_50pct(hz, &per, &cmp);
     
-    TCA0.SINGLE.PER = per;
-    TCA0.SINGLE.CNT = 0;
-    TCA0.SINGLE.CMP0 = cmp;
-    TCA0.SINGLE.CTRLB |= TCA_SINGLE_CMP0EN_bm;
+    // Use buffered registers only (like studio demo)
+    TCA0.SINGLE.PERBUF = per;
+    TCA0.SINGLE.CMP0BUF = cmp;
 }
 
 void buzzer_stop(void) {
-    TCA0.SINGLE.CMP0 = 0;
-    TCA0.SINGLE.CTRLB &= (uint8_t)~TCA_SINGLE_CMP0EN_bm;
-    PORTB.OUTCLR = PIN0_bm;
-}
-
-/* Legacy function using buffered registers */
-void buzzer_on(uint8_t tone_index)
-{
-    extern const uint16_t step_freq[4];
-    tca0_enable_if_needed();
-    
-    uint8_t idx = tone_index & 0x03;
-    uint16_t hz = step_freq[idx];
-    
-    uint16_t per, cmp;
-    tca_calc_50pct(hz, &per, &cmp);
-    
-    TCA0.SINGLE.CMP0BUF = cmp;
-    TCA0.SINGLE.PERBUF = per;
-}
-
-void buzzer_off(void)
-{
     TCA0.SINGLE.CMP0BUF = 0;
+    PORTB.OUTCLR = PIN0_bm;
 }
 

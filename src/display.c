@@ -25,17 +25,17 @@ void display_init(void) {
     SPI0.CTRLA |= SPI_ENABLE_bm;   // Enable
 }
 
-// Main display function - like demos
+// Main display function
 void set_display_segments(uint8_t segs_l, uint8_t segs_r) {
     digit_l = segs_l;
     digit_r = segs_r;
 }
 
 void display_write(uint8_t data) {
-    SPI0.DATA = data;              // Note DATA register used for both Tx and Rx
+    SPI0.DATA = data;         
 }
 
-// Multiplexing function - like demos  
+// Multiplexing function
 void swap_display_digit(void) {
     static int digit = 0;
     if (digit) {
@@ -46,7 +46,6 @@ void swap_display_digit(void) {
     digit = !digit;
 }
 
-// Legacy compatibility functions for main.c
 void display_set(uint8_t lhs_mask, uint8_t rhs_mask) {
     set_display_segments(lhs_mask, rhs_mask);
 }
@@ -55,7 +54,6 @@ void display_blank(void) {
     set_display_segments(DISP_OFF, DISP_OFF);
 }
 
-// Called by timer ISR - compatibility with our timer system
 void display_multiplex(void) {
     swap_display_digit();
 }

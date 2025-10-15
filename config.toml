@@ -14,7 +14,7 @@
 # Section A
 gameplay = true
 pushbutton-hold = true
-pushbutton-debouncing = true
+pushbutton-debouncing = false
 
 # Section B
 sequencing = false
