@@ -73,54 +73,45 @@ static void hs_insert_at(uint8_t pos, const char *name, uint16_t score) {
     hs[pos].name[k] = '\0';
 }
 
-/* ---------- Public API ---------- */
 uint8_t highscore_qualifies(uint16_t score) {
     uint8_t n = hs_size();
     if (n < HS_MAX) return 1;
-    /* table full: qualifies if strictly greater than last score */
+    // table full
     return (score > hs[n - 1].score) ? 1u : 0u;
 }
 
 void highscore_prompt_and_store(uint16_t score) {
+    extern volatile uint16_t elapsed_time;
     char name[21];
     uint8_t len = 0;
 
-    /* prompt */
     hs_uart_puts("Enter name: ");
 
-    /* timers: 5s total if no input; else 5s since last char */
-    const uint32_t TOUT_MS = 5000;
-    uint32_t t_start = millis();
-    uint32_t t_last  = t_start;
+    const uint16_t TOUT_MS = 5000;
+    elapsed_time = 0;
+    uint16_t last_char_time = 0;
 
     while (1) {
-        /* input available? */
         if (hs_uart_rx_ready()) {
             char c = hs_uart_getc_now();
 
             if (c == '\r') {
-                /* ignore CR on Windows "CRLF" */
                 continue;
             }
             if (c == '\n') {
-                /* finish on newline */
                 break;
             }
 
             if (len < 20) {
-                name[len++] = c;  /* store char */
+                name[len++] = c;
             }
-            /* echo is NOT required by spec; do nothing */
-            t_last = millis();
+            last_char_time = elapsed_time;
         }
 
-        uint32_t now = millis();
         if (len == 0) {
-            /* no input at all -> 5s from prompt => empty name */
-            if ((uint32_t)(now - t_start) >= TOUT_MS) break;
+            if (elapsed_time >= TOUT_MS) break;
         } else {
-            /* some input -> 5s from last char => accept so far */
-            if ((uint32_t)(now - t_last) >= TOUT_MS) break;
+            if ((elapsed_time - last_char_time) >= TOUT_MS) break;
         }
     }
 
@@ -136,8 +127,6 @@ void highscore_prompt_and_store(uint16_t score) {
     hs_uart_puts("\n");
     for (uint8_t i = 0; i < HS_MAX; i++) {
         if (!hs[i].used) break;
-        /* "<name> <score>\n" */
-        /* name may be empty string ("") and that's allowed */
         const char *p = hs[i].name;
         while (*p) hs_uart_putc(*p++);
         hs_uart_putc(' ');

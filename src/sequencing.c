@@ -42,13 +42,13 @@ uint8_t sequencing_next_step(void) {
 }
 
 void play_step(uint8_t step, uint16_t step_delay_ms) {
+    extern volatile uint16_t elapsed_time;
     step &= 0x03;
     
-    // Start tone
+    // Start tone and show pattern
     uint16_t freq = uart_apply_freq_offset(step_freq[step]);
     buzzer_start_hz(freq);
     
-    // Show pattern
     if (step_is_lhs[step]) {
         display_set(step_mask[step], DISP_OFF);
     } else {
@@ -56,62 +56,18 @@ void play_step(uint8_t step, uint16_t step_delay_ms) {
     }
     
     // ON for half the delay
-    uint32_t t0 = millis();
-    while ((millis() - t0) < (step_delay_ms / 2)) {}
+    elapsed_time = 0;
+    while (elapsed_time < (step_delay_ms / 2)) {}
     
     // OFF for remaining half
     display_blank();
     buzzer_stop();
-    while ((millis() - t0) < step_delay_ms) {}
+    elapsed_time = 0;
+    while (elapsed_time < (step_delay_ms / 2)) {}
 }
 
 void play_sequence(const uint8_t *seq, uint8_t len, uint16_t step_delay_ms) {
     for (uint8_t i = 0; i < len; i++) {
         play_step(seq[i], step_delay_ms);
     }
-}
-
-/* ------------------- Non-blocking step player ------------------- */
-static inline void show_step(uint8_t step) {
-    /* Apply frequency offset to base tone */
-    uint16_t base_hz = step_freq[step];
-    uint16_t adjusted_hz = uart_apply_freq_offset(base_hz);
-    /* Start tone first, then illuminate segments */
-    buzzer_start_hz(adjusted_hz);
-
-    /* Set BOTH sides of display buffer: active side shows pattern, other side is blank */
-    if (step_is_lhs[step]) {
-        display_set(step_mask[step], DISP_OFF);  /* LHS active, RHS blank */
-    } else {
-        display_set(DISP_OFF, step_mask[step]);  /* LHS blank, RHS active */
-    }
-    /* Rely on ISR-driven multiplex to latch shortly after */
-}
-
-void sp_start(step_player_t *sp, uint8_t step, uint16_t step_delay_ms) {
-    sp->step = (step & 3);
-    sp->step_delay_ms = step_delay_ms;
-    sp->phase = SP_ON;
-    show_step(sp->step);
-    sp->t_next = millis() + (step_delay_ms / 2);
-}
-
-void sp_tick(step_player_t *sp) {
-    if (sp->phase == SP_IDLE) return;
-    uint32_t now = millis();
-
-    if (now - sp->t_next < 0x80000000UL) return;  /* not yet */
-
-    if (sp->phase == SP_ON) {
-        display_blank();
-        buzzer_stop();
-        sp->phase = SP_OFF;
-        sp->t_next = now + (sp->step_delay_ms / 2);
-    } else {
-        sp->phase = SP_IDLE;
-    }
-}
-
-uint8_t sp_done(const step_player_t *sp) {
-    return (sp->phase == SP_IDLE);
 }

@@ -1,86 +1,70 @@
-#include "display.h"
-#include "display_macros.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdint.h>
 
-#define DISP_LATCH_PORT   PORTA
-#define DISP_LATCH_PIN_bm PIN1_bm
+#include "display.h"
+#include "display_macros.h"
 
-/* Display buffer */
+// Display buffer - like demos
 volatile uint8_t digit_l = DISP_OFF;
 volatile uint8_t digit_r = DISP_OFF;
 
-static inline void spi0_send(uint8_t b) {
-    SPI0.DATA = b;
-}
-
-static inline void latch_pulse(void) {
-    DISP_LATCH_PORT.OUTCLR = DISP_LATCH_PIN_bm;
-    DISP_LATCH_PORT.OUTSET = DISP_LATCH_PIN_bm;
-}
-
-/* Compose the byte: [Q7=digit select][Q6..Q0 = segments] */
-static inline uint8_t make_byte(uint8_t seg_mask_7bits, uint8_t lhs) {
-    uint8_t b = (seg_mask_7bits & 0x7F);
-    if (lhs) b |= 0x80;
-    return b;
-}
-
 void display_init(void) {
-    digit_l = DISP_OFF;
-    digit_r = DISP_OFF;
+    PORTMUX.SPIROUTEA = PORTMUX_SPI0_ALT1_gc;  // SPI pins on PC0-3
+
+    // SPI SCK and MOSI
+    PORTC.DIRSET = (PIN0_bm | PIN2_bm);   // SCK (PC0) and MOSI (PC2) output
+
+    // DISP_LATCH
+    PORTA.OUTSET = PIN1_bm;        // DISP_LATCH initial high
+    PORTA.DIRSET = PIN1_bm;        // set DISP_LATCH pin as output
+
+    SPI0.CTRLA = SPI_MASTER_bm;    // Master, /4 prescaler, MSB first
+    SPI0.CTRLB = SPI_SSD_bm;       // Mode 0, client select disable, unbuffered
+    SPI0.INTCTRL = SPI_IE_bm;      // Interrupt enable
+    SPI0.CTRLA |= SPI_ENABLE_bm;   // Enable
 }
 
-/* Set display buffer */
-void display_set(uint8_t lhs_mask, uint8_t rhs_mask) {
-    digit_l = lhs_mask;
-    digit_r = rhs_mask;
+// Main display function - like demos
+void set_display_segments(uint8_t segs_l, uint8_t segs_r) {
+    digit_l = segs_l;
+    digit_r = segs_r;
 }
 
-/* Shorthand helpers */
-void display_set_lhs(uint8_t mask) {
-    digit_l = mask;
+void display_write(uint8_t data) {
+    SPI0.DATA = data;              // Note DATA register used for both Tx and Rx
 }
 
-void display_set_rhs(uint8_t mask) {
-    digit_r = mask;
-}
-
-void display_set_blank(void) {
-    digit_l = DISP_OFF;
-    digit_r = DISP_OFF;
-}
-
-/* Legacy functions */
-void display_write_lhs(uint8_t mask) {
-    digit_l = mask;
-}
-
-void display_write_rhs(uint8_t mask) {
-    digit_r = mask;
-}
-
-void display_blank(void) {
-    digit_l = DISP_OFF;
-    digit_r = DISP_OFF;
-}
-
-/* Called by timer ISR to multiplex */
-void display_multiplex(void) {
-    static uint8_t digit = 0;
+// Multiplexing function - like demos  
+void swap_display_digit(void) {
+    static int digit = 0;
     if (digit) {
-        spi0_send(make_byte(digit_l, 1));
+        display_write(digit_l | (0x01 << 7));
     } else {
-        spi0_send(make_byte(digit_r, 0));
+        display_write(digit_r);
     }
     digit = !digit;
 }
 
-/* SPI transfer complete ISR */
+// Legacy compatibility functions for main.c
+void display_set(uint8_t lhs_mask, uint8_t rhs_mask) {
+    set_display_segments(lhs_mask, rhs_mask);
+}
+
+void display_blank(void) {
+    set_display_segments(DISP_OFF, DISP_OFF);
+}
+
+// Called by timer ISR - compatibility with our timer system
+void display_multiplex(void) {
+    swap_display_digit();
+}
+
 ISR(SPI0_INT_vect) {
-    DISP_LATCH_PORT.OUTCLR = DISP_LATCH_PIN_bm;
-    DISP_LATCH_PORT.OUTSET = DISP_LATCH_PIN_bm;
+    //rising edge on DISP_LATCH
+    PORTA.OUTCLR = PIN1_bm;
+    PORTA.OUTSET = PIN1_bm;  
+
     SPI0.INTFLAGS = SPI_IF_bm;
 }
 
