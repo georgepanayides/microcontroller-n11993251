@@ -1,141 +1,68 @@
 #include "sequencing.h"
-#include "display.h"
+#include "display.h" 
 #include "display_macros.h"
 #include "buzzer.h"
 #include "timer.h"
+#include "uart.h"
 #include <stdint.h>
-#include <stdio.h>
-#include "uart.h"   /* for uart_apply_freq_offset */
-/* For SREG and cli/sei */
-#include <avr/io.h>
-#include <avr/interrupt.h>
 
-/* Internal 32-bit LFSR RNG per assignment spec Section B */
-static uint32_t lfsr_state = 0x11993251u; /* seed with student number */
-
-/* Assignment-specified mask for the 32-bit LFSR */
+// 32-bit LFSR for sequence generation
+static uint32_t lfsr_state = 0x11993251u;
 #define LFSR_MASK 0xE2025CABu
 
-/* Segments are active-low; combine with bitwise AND */
-#define SEG_EF  (DISP_SEG_E & DISP_SEG_F)
-#define SEG_BC  (DISP_SEG_B & DISP_SEG_C)
+// Step frequencies (Hz)
+const uint16_t step_freq[4] = { 338, 284, 451, 169 };
 
-/* Exact playback tones from Table 2 with xy=51 (4xy -> 451 Hz)
-   E(high) = 451 * 2^(-5/12)  ~ 338 Hz
-   C#      = 451 * 2^(-8/12)  ~ 284 Hz
-   A       = 451              = 451 Hz
-   E(low)  = 451 * 2^(-17/12) ~ 169 Hz
-*/
-const uint16_t step_freq[4] = {
-    338,  /* S1: E(high) */
-    284,  /* S2: C#      */
-    451,  /* S3: A       */
-    169   /* S4: E(low)  */
-};
-
-
-/* Digit selection: S1/S2 = LHS, S3/S4 = RHS */
+// Display patterns for each step
 static const uint8_t step_is_lhs[4] = { 1, 1, 0, 0 };
-
-/* Segment masks for each step (active-low) */
 static const uint8_t step_mask[4] = {
-    SEG_EF,  /* S1 */
-    SEG_BC,  /* S2 */
-    SEG_EF,  /* S3 */
-    SEG_BC   /* S4 */
+    DISP_SEG_E & DISP_SEG_F,  // S1
+    DISP_SEG_B & DISP_SEG_C,  // S2  
+    DISP_SEG_E & DISP_SEG_F,  // S3
+    DISP_SEG_B & DISP_SEG_C   // S4
 };
 
-/* ------------------- Sequencer core ------------------- */
 void sequencing_init(uint32_t seed) {
-    if (seed == 0) seed = 1u;
-    lfsr_state = seed;
+    lfsr_state = (seed == 0) ? 1u : seed;
 }
 
-/* Save current LFSR state (for regenerating sequence without array storage) */
 uint32_t sequencing_save_state(void) {
     return lfsr_state;
 }
 
-/* Restore LFSR state (for regenerating sequence without array storage) */
 void sequencing_restore_state(uint32_t state) {
     lfsr_state = state;
 }
 
-/* Assignment-specified LFSR algorithm from Section B */
 uint8_t sequencing_next_step(void) {
-    uint8_t bit = (uint8_t)(lfsr_state & 1u);  /* BIT ← lsbit(STATE_LFSR) */
-    lfsr_state >>= 1;                          /* STATE_LFSR ← STATE_LFSR >> 1 */
-    if (bit == 1u) {
-        lfsr_state ^= LFSR_MASK;               /* if (BIT = 1) STATE_LFSR ← STATE_LFSR xor MASK */
-    }
-    return (uint8_t)(lfsr_state & 0x03u);      /* STEP ← STATE_LFSR and 0b11 */
+    uint8_t bit = lfsr_state & 1u;
+    lfsr_state >>= 1;
+    if (bit) lfsr_state ^= LFSR_MASK;
+    return lfsr_state & 0x03u;
 }
 
-/* ------------------- Blocking step/sequence playback ------------------- */
 void play_step(uint8_t step, uint16_t step_delay_ms) {
     step &= 0x03;
-
-    // DEBUG: Uncomment for timing analysis
-    // uart_puts("[STEP] BEGIN step=");
-    // uart_put_u16_dec((uint16_t)(step+1));
-    // uart_puts(" at t=");
-    // uart_put_u32_dec(millis());
-    // uart_puts("ms delay=");
-    // uart_put_u16_dec(step_delay_ms);
-    // uart_puts("ms\r\n");
-
-    /* Apply frequency offset to base tone */
-    uint16_t base_hz = step_freq[step];
-    uint16_t active_hz = uart_apply_freq_offset(base_hz);
-
-    /* Start tone first, then illuminate segments */
-    buzzer_start_hz(active_hz);
-
-    /* Set BOTH sides of display buffer: active side shows pattern, other side is blank */
+    
+    // Start tone
+    uint16_t freq = uart_apply_freq_offset(step_freq[step]);
+    buzzer_start_hz(freq);
+    
+    // Show pattern
     if (step_is_lhs[step]) {
-        display_set(step_mask[step], DISP_OFF);  /* LHS active, RHS blank */
+        display_set(step_mask[step], DISP_OFF);
     } else {
-        display_set(DISP_OFF, step_mask[step]);  /* LHS blank, RHS active */
+        display_set(DISP_OFF, step_mask[step]);
     }
-    /* Rely on ISR-driven multiplex to latch shortly after */
-
+    
+    // ON for half the delay
     uint32_t t0 = millis();
-    uint32_t on_time = step_delay_ms / 2;
+    while ((millis() - t0) < (step_delay_ms / 2)) {}
     
-    // uart_puts("[DBG] ON start t0=");
-    // uart_put_u32_dec(t0);
-    // uart_puts(" target=");
-    // uart_put_u32_dec(on_time);
-    // uart_puts("ms\r\n");
-    
-    /* Wait for ON phase */
-    while ((uint32_t)(millis() - t0) < on_time) {
-        /* While ON, accept INC/DEC and retune immediately per spec */
-        uint16_t before = active_hz;
-        uart_poll_commands(0, base_hz, &active_hz);
-        if (active_hz != before) {
-            buzzer_start_hz(active_hz); /* retune live */
-        }
-        /* ISR continues display multiplexing */
-    }
-    
-    /* Turn off display and buzzer */
-    // uart_puts("[DBG] display_blank() at t=");
-    // uart_put_u32_dec(millis() - t0);
-    // uart_puts(" (expected=");
-    // uart_put_u32_dec(on_time);
-    // uart_puts(")\r\n");
+    // OFF for remaining half
     display_blank();
     buzzer_stop();
-    
-    /* Wait for OFF phase */
-    while ((uint32_t)(millis() - t0) < step_delay_ms) {
-        /* Spin */
-    }
-    
-    // uart_puts("[DBG] play_step complete total=");
-    // uart_put_u32_dec(millis() - t0);
-    // uart_puts("ms\r\n");
+    while ((millis() - t0) < step_delay_ms) {}
 }
 
 void play_sequence(const uint8_t *seq, uint8_t len, uint16_t step_delay_ms) {

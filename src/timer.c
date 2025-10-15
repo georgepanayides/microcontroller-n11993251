@@ -9,11 +9,6 @@
 static volatile uint32_t g_ms = 0;
 
 void tcb0_init_1ms(void) {
-    /* Periodic interrupt every 1 ms:
-       Using hardcoded CCMP value matching clock-demo-2 approach
-       clock-demo-2 uses CCMP=52083 for 1/64 second (15.625ms)
-       For 1ms: 52083 / 15.625 = 3333.312, round to 3333
-    */
     TCB0.CCMP   = 3333;  /* Hardcoded for 1ms at nominal 3.333MHz */
     TCB0.CTRLB  = TCB_CNTMODE_INT_gc;                 /* Periodic Interrupt mode */
     TCB0.INTCTRL = TCB_CAPT_bm;                       /* enable interrupt */

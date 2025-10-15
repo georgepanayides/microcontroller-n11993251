@@ -1,14 +1,14 @@
 #include "highscore.h"
 #include <avr/io.h>
 #include <stdint.h>
-#include "timer.h"   // for millis()
-#include "uart.h"    // for uart_putc / uart_puts if you have them
+#include "timer.h"
+#include "uart.h"
 
 #ifndef F_CPU
 #  define F_CPU 20000000UL
 #endif
 
-/* ---------- UART helpers (non-blocking), use USART0 directly ---------- */
+/* UART helpers */
 static inline uint8_t hs_uart_rx_ready(void) {
     return (USART0.STATUS & USART_RXCIF_bm) ? 1u : 0u;
 }
@@ -23,15 +23,14 @@ static inline void hs_uart_puts(const char *s) {
     while (*s) hs_uart_putc(*s++);
 }
 
-/* ---------- Table in SRAM ---------- */
+/* Table in SRAM */
 #define HS_MAX 5
 typedef struct { char name[21]; uint16_t score; uint8_t used; } hs_entry_t;
 static hs_entry_t hs[HS_MAX];
 
-/* ---------- Utilities ---------- */
+/* Utilities */
 static void hs_print_u16(uint16_t v) {
-    /* Print decimal without stdio */
-    char buf[6]; /* max 65535 + NUL */
+    char buf[6];
     int8_t i = 0;
     if (v == 0) { hs_uart_putc('0'); return; }
     while (v > 0 && i < 5) { buf[i++] = '0' + (v % 10u); v /= 10u; }
@@ -44,7 +43,7 @@ static uint8_t hs_size(void) {
     return n;
 }
 
-/* Find insertion index for score (descending). Equal scores can appear in any order. */
+/* Find insertion index for score (descending) */
 static uint8_t hs_find_pos(uint16_t score) {
     uint8_t n = hs_size();
     for (uint8_t i = 0; i < n; i++) {
