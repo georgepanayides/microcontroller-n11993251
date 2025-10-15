@@ -195,7 +195,7 @@ static void state_machine(void)
             
             len = 0;
             display_blank();  // Ensure display is clear before new round
-            gs = GS_WAIT_START;
+            gs = GS_PLAYBACK;
             break; }
         }
     }
