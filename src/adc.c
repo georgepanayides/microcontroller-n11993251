@@ -26,5 +26,9 @@ void adc_init_pot_8bit(void)
 
 uint8_t adc_read8(void)
 {
-    return ADC0.RESULT0;
+    // Wait for a fresh conversion in free-running mode
+    while ((ADC0.INTFLAGS & ADC_RESRDY_bm) == 0) { }
+    uint8_t result = ADC0.RESULT0;
+    ADC0.INTFLAGS = ADC_RESRDY_bm;  // Clear the flag
+    return result;
 }

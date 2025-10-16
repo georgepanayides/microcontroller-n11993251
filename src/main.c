@@ -93,7 +93,7 @@ static void echo_button(uint8_t b, uint16_t min_duration_ms)
     
     // If button still pressed after minimum time, wait for release
     uint8_t button_mask = (1 << (b + 4));  // Convert button index to PIN mask
-    while (!(buttons_get_debounced_state() & button_mask)) {}
+    while ((buttons_get_debounced_state() & button_mask) == 0) {}  // Wait while button IS pressed (active low)
     
     disable_outputs();
 }
@@ -170,7 +170,13 @@ static void state_machine(void)
             
             if (b < 0) break;  // No button pressed, wait for next loop
 
-            // Echo the button with minimum duration = 50% of playback delay
+            // Per spec: recompute playback delay at the beginning of playing a tone
+            // Do this for user input tones as well
+            {
+                uint8_t pot_now = adc_read8();
+                current_step_delay_ms = playback_delay_ms_from_adc8(pot_now);
+            }
+            // Echo the button with minimum duration = 50% of current playback delay
             uint16_t min_duration = current_step_delay_ms / 2;
             echo_button((uint8_t)b, min_duration);
 
@@ -182,6 +188,11 @@ static void state_machine(void)
                 i++;  // Move to next step in sequence
                 if (i == len) {
                     // User completed entire sequence correctly
+                    // Recompute playback delay again before SUCCESS display (holds for playback delay)
+                    {
+                        uint8_t pot_now = adc_read8();
+                        current_step_delay_ms = playback_delay_ms_from_adc8(pot_now);
+                    }
                     display_set(DISP_ON, DISP_ON);  // Show success pattern (88)
                     elapsed_time = 0;
                     while (elapsed_time < current_step_delay_ms) {}  // Hold success display
