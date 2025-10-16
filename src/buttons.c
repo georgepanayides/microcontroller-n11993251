@@ -45,12 +45,15 @@ void buttons_init(void)
     TCB1.CTRLA   = TCB_ENABLE_bm;
 }
 
-/* Simple 5ms ISR - just for display multiplexing */
+/* Simple 5ms ISR - for display multiplexing and button debouncing */
 ISR(TCB1_INT_vect)
 {
     /* Multiplex display every 5 ms */
     extern void display_multiplex(void);
     display_multiplex();
+    
+    /* Debounce buttons every 5 ms */
+    buttons_debounce();
 
     TCB1.INTFLAGS = TCB_CAPT_bm;
 }

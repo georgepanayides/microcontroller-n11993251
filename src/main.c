@@ -92,11 +92,8 @@ static void echo_button(uint8_t b, uint16_t min_duration_ms)
     while (elapsed_time < min_duration_ms) {}
     
     // If button still pressed after minimum time, wait for release
-    buttons_debounce();
     uint8_t button_mask = (1 << (b + 4));  // Convert button index to PIN mask
-    while (!(buttons_get_debounced_state() & button_mask)) {
-        buttons_debounce();
-    }
+    while (!(buttons_get_debounced_state() & button_mask)) {}
     
     disable_outputs();
 }
@@ -119,9 +116,7 @@ static void state_machine(void)
     game_state_t gs = GS_PLAYBACK;
 
     while (1) {
-        // Simple debouncing like demos
-        buttons_debounce();
-        
+        // Button state is debounced automatically in TCB1 interrupt
         pb_state_r = pb_state;
         pb_state = buttons_get_debounced_state();
         pb_changed = pb_state_r ^ pb_state;

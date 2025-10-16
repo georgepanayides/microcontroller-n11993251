@@ -20,10 +20,10 @@ pushbutton-debouncing = true
 sequencing = true
 
 # Section C
-playback-delay = false
+playback-delay = true
 
 # Section D
-playback-frequency = false
+playback-frequency = true
 
 # Section E
 uart-gameplay = false
