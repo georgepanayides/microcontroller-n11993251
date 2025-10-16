@@ -81,23 +81,40 @@ static void disable_outputs(void)
     display_blank();
 }
 
+static void echo_button(uint8_t b, uint16_t min_duration_ms)
+{
+    extern volatile uint16_t elapsed_time;
+    
+    enable_outputs(b);
+    elapsed_time = 0;
+    
+    // Keep output active for minimum duration
+    while (elapsed_time < min_duration_ms) {}
+    
+    // If button still pressed after minimum time, wait for release
+    buttons_debounce();
+    uint8_t button_mask = (1 << (b + 4));  // Convert button index to PIN mask
+    while (!(buttons_get_debounced_state() & button_mask)) {
+        buttons_debounce();
+    }
+    
+    disable_outputs();
+}
+
 static void state_machine(void)
 {
     extern const uint16_t step_freq[4];
-    typedef enum { GS_WAIT_START, GS_PLAYBACK, GS_INPUT, GS_BUTTON_HELD, GS_FAIL } game_state_t;
+    typedef enum { GS_WAIT_START, GS_PLAYBACK, GS_INPUT, GS_FAIL } game_state_t;
     
     static uint32_t round_start_state = 0;
     static uint8_t len = 0;
     static uint8_t i = 0;
     static uint16_t current_step_delay_ms = 1200;
     static uint8_t played_steps[64];
-    static uint8_t held_button = 0xFF;
-    static uint16_t min_duration = 0;
     
     uint8_t pb_state = 0xFF;
     uint8_t pb_state_r = 0xFF;
-    uint8_t pb_changed, pb_falling, pb_rising;
-    extern volatile uint16_t elapsed_time;
+    uint8_t pb_changed, pb_falling;
     
     game_state_t gs = GS_PLAYBACK;
 
@@ -109,7 +126,6 @@ static void state_machine(void)
         pb_state = buttons_get_debounced_state();
         pb_changed = pb_state_r ^ pb_state;
         pb_falling = pb_changed & pb_state_r;
-        pb_rising = pb_changed & pb_state;
         
         switch (gs) {
         case GS_WAIT_START:
@@ -157,60 +173,30 @@ static void state_machine(void)
             else if (pb_falling & PIN6_bm) b = 2;  // S3 pressed → step 2
             else if (pb_falling & PIN7_bm) b = 3;  // S4 pressed → step 3
             
-            if (b >= 0) {
-                // Check if correct button
-                uint8_t expected = (i < sizeof(played_steps)) ? played_steps[i] : 0xFF;
-                if ((uint8_t)b == expected) {
-                    // Start button output immediately
-                    enable_outputs((uint8_t)b);
-                    held_button = (uint8_t)b;
-                    min_duration = current_step_delay_ms / 2;  // 50% of playback delay
-                    elapsed_time = 0;
-                    gs = GS_BUTTON_HELD;
-                } else {
-                    gs = GS_FAIL;
-                }
-            }
-            break; }
+            if (b < 0) break;  // No button pressed, wait for next loop
 
-        case GS_BUTTON_HELD: {
-            uint8_t button_mask = (1 << (held_button + 4));
-            
-            // Check if button released
-            if (pb_rising & button_mask) {
-                // Button released - check if minimum duration met
-                if (elapsed_time >= min_duration) {
-                    disable_outputs();
-                    i++;  // Move to next step
-                    
-                    // Check if sequence complete
-                    if (i == len) {
-                        display_set(DISP_ON, DISP_ON);
-                        elapsed_time = 0;
-                        while (elapsed_time < current_step_delay_ms) {}
-                        display_blank();
-                        gs = GS_PLAYBACK;
-                    } else {
-                        gs = GS_INPUT;  // Wait for next button
-                    }
-                } else {
-                    // Button released too early - keep output until minimum duration
-                    while (elapsed_time < min_duration) {}
-                    disable_outputs();
-                    i++;
-                    
-                    if (i == len) {
-                        display_set(DISP_ON, DISP_ON);
-                        elapsed_time = 0;
-                        while (elapsed_time < current_step_delay_ms) {}
-                        display_blank();
-                        gs = GS_PLAYBACK;
-                    } else {
-                        gs = GS_INPUT;
-                    }
+            // Echo the button with minimum duration = 50% of playback delay
+            uint16_t min_duration = current_step_delay_ms / 2;
+            echo_button((uint8_t)b, min_duration);
+
+            // Check if the pressed button matches what Simon played
+            uint8_t expected = (i < sizeof(played_steps)) ? played_steps[i] : 0xFF;
+
+            if ((uint8_t)b == expected) {
+                // Correct button pressed
+                i++;  // Move to next step in sequence
+                if (i == len) {
+                    // User completed entire sequence correctly
+                    display_set(DISP_ON, DISP_ON);  // Show success pattern (88)
+                    elapsed_time = 0;
+                    while (elapsed_time < current_step_delay_ms) {}  // Hold success display
+                    display_blank();  // Clear display
+                    gs = GS_PLAYBACK;  // Go to next round with longer sequence
                 }
+            } else {
+                // Wrong button pressed
+                gs = GS_FAIL;  // Go to fail state
             }
-            // If button still held and minimum duration reached, keep output active
             break; }
 
         case GS_FAIL: {

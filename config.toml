@@ -14,10 +14,10 @@
 # Section A
 gameplay = true
 pushbutton-hold = true
-pushbutton-debouncing = false
+pushbutton-debouncing = true
 
 # Section B
-sequencing = false
+sequencing = true
 
 # Section C
 playback-delay = false
