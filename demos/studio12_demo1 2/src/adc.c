@@ -10,7 +10,7 @@ void adc_init(void) {
     ADC0.CTRLC = (4 << ADC_TIMEBASE_gp) | ADC_REFSEL_VDD_gc;
 
     ADC0.CTRLE = 64;                               // Sample duration of 64
-    //ADC0.CTRLF = ADC_FREERUN_bm | ADC_LEFTADJ_bm;  // Free running, left adjust result    
+    ADC0.CTRLF = ADC_FREERUN_bm | ADC_LEFTADJ_bm;  // Free running, left adjust result    
     ADC0.CTRLF = ADC_FREERUN_bm;                   // Free running
     ADC0.MUXPOS = ADC_MUXPOS_AIN2_gc;              // Select AIN2 (potentiomenter R1)
 

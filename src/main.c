@@ -106,7 +106,6 @@ static void state_machine(void)
     static uint32_t round_start_state = 0;
     static uint8_t len = 0;
     static uint8_t i = 0;
-    static uint16_t current_step_delay_ms = 1200;
     static uint8_t played_steps[64];
     
     uint8_t pb_state = 0xFF;
@@ -140,15 +139,15 @@ static void state_machine(void)
             }
             len++;  // Increase sequence length for this round
             
-            // Read potentiometer to determine playback speed
-            uint8_t pot = adc_read8();
-            current_step_delay_ms = playback_delay_ms_from_adc8(pot);
+            // Read ADC once for this entire Simon sequence (all tones use same delay)
+            uint8_t pot_simon = adc_read8();
+            uint16_t simon_delay_ms = playback_delay_ms_from_adc8(pot_simon);
             
             // Generate and play the sequence for this round
             sequencing_restore_state(round_start_state);  // Start from round beginning
             for (uint8_t j = 0; j < len; j++) {
                 uint8_t step = sequencing_next_step();  // Get next step from LFSR
-                play_step(step, current_step_delay_ms);  // Play tone and show display
+                play_step(step, simon_delay_ms);  // Play tone with consistent Simon delay
                 if (j < sizeof(played_steps)) played_steps[j] = step;  // Remember for checking user input
             }
             
@@ -170,14 +169,10 @@ static void state_machine(void)
             
             if (b < 0) break;  // No button pressed, wait for next loop
 
-            // Per spec: recompute playback delay at the beginning of playing a tone
-            // Do this for user input tones as well
-            {
-                uint8_t pot_now = adc_read8();
-                current_step_delay_ms = playback_delay_ms_from_adc8(pot_now);
-            }
-            // Echo the button with minimum duration = 50% of current playback delay
-            uint16_t min_duration = current_step_delay_ms / 2;
+            // Per spec: recompute playback delay at the beginning of playing each user input tone
+            uint8_t pot_now = adc_read8();
+            uint16_t fresh_delay_ms = playback_delay_ms_from_adc8(pot_now);
+            uint16_t min_duration = fresh_delay_ms / 2;
             echo_button((uint8_t)b, min_duration);
 
             // Check if the pressed button matches what Simon played
@@ -188,14 +183,12 @@ static void state_machine(void)
                 i++;  // Move to next step in sequence
                 if (i == len) {
                     // User completed entire sequence correctly
-                    // Recompute playback delay again before SUCCESS display (holds for playback delay)
-                    {
-                        uint8_t pot_now = adc_read8();
-                        current_step_delay_ms = playback_delay_ms_from_adc8(pot_now);
-                    }
                     display_set(DISP_ON, DISP_ON);  // Show success pattern (88)
                     elapsed_time = 0;
-                    while (elapsed_time < current_step_delay_ms) {}  // Hold success display
+                    // Use fresh delay for success display duration
+                    uint8_t pot_final = adc_read8();
+                    uint16_t success_delay_ms = playback_delay_ms_from_adc8(pot_final);
+                    while (elapsed_time < success_delay_ms) {}  // Hold success display
                     display_blank();  // Clear display
                     gs = GS_PLAYBACK;  // Go to next round with longer sequence
                 }
@@ -210,14 +203,17 @@ static void state_machine(void)
             display_set(DISP_DASH, DISP_DASH);  // Show "--" pattern
             buzzer_start_hz(FAIL_TONE_HZ);  // Play fail tone
             elapsed_time = 0;
-            while (elapsed_time < current_step_delay_ms) {}  // Hold fail tone/display
+            // Use fresh delay for fail display duration
+            uint8_t pot_fail = adc_read8();
+            uint16_t fail_delay_ms = playback_delay_ms_from_adc8(pot_fail);
+            while (elapsed_time < fail_delay_ms) {}  // Hold fail tone/display
             buzzer_stop();
             
             // Show user's score (sequence length they reached)
-            display_score(len, current_step_delay_ms);
+            display_score(len, fail_delay_ms);
             display_blank();
             elapsed_time = 0;
-            while (elapsed_time < current_step_delay_ms) {}  // Brief pause
+            while (elapsed_time < fail_delay_ms) {}  // Brief pause
             
             // Advance LFSR for next game (as per assignment requirements)
             sequencing_restore_state(round_start_state);  // Go back to start of failed round

@@ -3,6 +3,7 @@
 #include "display_macros.h"
 #include "buzzer.h"
 #include "timer.h"
+#include "adc.h"
 #include <stdint.h>
 
 static uint32_t lfsr_state = 0x11993251u;
@@ -34,6 +35,9 @@ void play_step(uint8_t step, uint16_t step_delay_ms) {
     extern volatile uint16_t elapsed_time;
     step &= 0x03;
     
+    // Use the delay passed by caller (Simon uses consistent delay, user input uses fresh delay)
+    uint16_t delay_ms = step_delay_ms;
+    
     uint16_t freq = step_freq[step];
     buzzer_start_hz(freq);
     
@@ -45,10 +49,10 @@ void play_step(uint8_t step, uint16_t step_delay_ms) {
     }
 
     elapsed_time = 0;
-    while (elapsed_time < (step_delay_ms / 2)) {}
+    while (elapsed_time < (delay_ms / 2)) {}
     
     display_blank();
     buzzer_stop();
     elapsed_time = 0;
-    while (elapsed_time < (step_delay_ms / 2)) {}
+    while (elapsed_time < (delay_ms / 2)) {}
 }
