@@ -3,13 +3,13 @@
 
 #include <stdint.h>
 
-/* Initialise PA4..PA7 with pull-ups and start a 5 ms TCB1 debouncer. */
+/* Initialise PA4..PA7 with pull-ups */
 void   buttons_init(void);
 
-/* True (non-zero) while the given button is physically held down. idx=0..3 */
-uint8_t buttons_is_down(uint8_t idx);
+/* Simple debouncing - call regularly from main loop */
+void   buttons_debounce(void);
 
-/* Get raw debounced button state (for edge detection). Returns PA7-PA4 bits. */
+/* Get debounced button state for edge detection */
 uint8_t buttons_get_debounced_state(void);
 
 #endif

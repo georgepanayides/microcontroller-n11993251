@@ -81,38 +81,35 @@ static void disable_outputs(void)
     display_blank();
 }
 
-static void echo_button(uint8_t b)
-{
-    extern volatile uint16_t elapsed_time;
-    
-    enable_outputs(b);
-    elapsed_time = 0;
-    while (elapsed_time < 125) {}
-    disable_outputs();
-}
-
 static void state_machine(void)
 {
     extern const uint16_t step_freq[4];
-    typedef enum { GS_WAIT_START, GS_PLAYBACK, GS_INPUT, GS_FAIL } game_state_t;
+    typedef enum { GS_WAIT_START, GS_PLAYBACK, GS_INPUT, GS_BUTTON_HELD, GS_FAIL } game_state_t;
     
     static uint32_t round_start_state = 0;
     static uint8_t len = 0;
     static uint8_t i = 0;
     static uint16_t current_step_delay_ms = 1200;
     static uint8_t played_steps[64];
+    static uint8_t held_button = 0xFF;
+    static uint16_t min_duration = 0;
     
     uint8_t pb_state = 0xFF;
     uint8_t pb_state_r = 0xFF;
-    uint8_t pb_changed, pb_falling;
+    uint8_t pb_changed, pb_falling, pb_rising;
+    extern volatile uint16_t elapsed_time;
     
     game_state_t gs = GS_PLAYBACK;
 
     while (1) {
+        // Simple debouncing like demos
+        buttons_debounce();
+        
         pb_state_r = pb_state;
         pb_state = buttons_get_debounced_state();
         pb_changed = pb_state_r ^ pb_state;
         pb_falling = pb_changed & pb_state_r;
+        pb_rising = pb_changed & pb_state;
         
         switch (gs) {
         case GS_WAIT_START:
@@ -125,77 +122,121 @@ static void state_machine(void)
             break;
 
         case GS_PLAYBACK: {
+            // Set up sequence generation for this round
             if (len == 0) {
-                // Only save state at start of new game, not after failure
+                // Starting a new game - save current LFSR position as round start
                 round_start_state = sequencing_save_state();
             }
-            len++;
+            len++;  // Increase sequence length for this round
             
+            // Read potentiometer to determine playback speed
             uint8_t pot = adc_read8();
             current_step_delay_ms = playback_delay_ms_from_adc8(pot);
             
-            sequencing_restore_state(round_start_state);
+            // Generate and play the sequence for this round
+            sequencing_restore_state(round_start_state);  // Start from round beginning
             for (uint8_t j = 0; j < len; j++) {
-                uint8_t step = sequencing_next_step();
-                play_step(step, current_step_delay_ms);
-                if (j < sizeof(played_steps)) played_steps[j] = step;
+                uint8_t step = sequencing_next_step();  // Get next step from LFSR
+                play_step(step, current_step_delay_ms);  // Play tone and show display
+                if (j < sizeof(played_steps)) played_steps[j] = step;  // Remember for checking user input
             }
             
-            sequencing_restore_state(round_start_state);
-            i = 0;
-            pb_state = buttons_get_debounced_state();
+            // Prepare for user input phase
+            sequencing_restore_state(round_start_state);  // Reset LFSR for next round
+            i = 0;  // Reset user input counter
+            pb_state = buttons_get_debounced_state();  // Clear button state
             pb_state_r = pb_state;
-            gs = GS_INPUT;
+            gs = GS_INPUT;  // Switch to waiting for user input
             break; }        
             
         case GS_INPUT: {
+            // Check which button was just pressed (falling edge detection)
             int8_t b = -1;
-            if (pb_falling & PIN4_bm) b = 0;
-            else if (pb_falling & PIN5_bm) b = 1;
-            else if (pb_falling & PIN6_bm) b = 2;
-            else if (pb_falling & PIN7_bm) b = 3;
+            if (pb_falling & PIN4_bm) b = 0;  // S1 pressed → step 0
+            else if (pb_falling & PIN5_bm) b = 1;  // S2 pressed → step 1
+            else if (pb_falling & PIN6_bm) b = 2;  // S3 pressed → step 2
+            else if (pb_falling & PIN7_bm) b = 3;  // S4 pressed → step 3
             
-            if (b < 0) break;
-
-            echo_button((uint8_t)b);
-
-            uint8_t expected = (i < sizeof(played_steps)) ? played_steps[i] : 0xFF;
-
-            if ((uint8_t)b == expected) {
-                i++;
-                if (i == len) {
-                    display_set(DISP_ON, DISP_ON);
+            if (b >= 0) {
+                // Check if correct button
+                uint8_t expected = (i < sizeof(played_steps)) ? played_steps[i] : 0xFF;
+                if ((uint8_t)b == expected) {
+                    // Start button output immediately
+                    enable_outputs((uint8_t)b);
+                    held_button = (uint8_t)b;
+                    min_duration = current_step_delay_ms / 2;  // 50% of playback delay
                     elapsed_time = 0;
-                    while (elapsed_time < current_step_delay_ms) {}
-                    display_blank();
-                    gs = GS_PLAYBACK;
+                    gs = GS_BUTTON_HELD;
+                } else {
+                    gs = GS_FAIL;
                 }
-            } else {
-                gs = GS_FAIL;
             }
             break; }
 
+        case GS_BUTTON_HELD: {
+            uint8_t button_mask = (1 << (held_button + 4));
+            
+            // Check if button released
+            if (pb_rising & button_mask) {
+                // Button released - check if minimum duration met
+                if (elapsed_time >= min_duration) {
+                    disable_outputs();
+                    i++;  // Move to next step
+                    
+                    // Check if sequence complete
+                    if (i == len) {
+                        display_set(DISP_ON, DISP_ON);
+                        elapsed_time = 0;
+                        while (elapsed_time < current_step_delay_ms) {}
+                        display_blank();
+                        gs = GS_PLAYBACK;
+                    } else {
+                        gs = GS_INPUT;  // Wait for next button
+                    }
+                } else {
+                    // Button released too early - keep output until minimum duration
+                    while (elapsed_time < min_duration) {}
+                    disable_outputs();
+                    i++;
+                    
+                    if (i == len) {
+                        display_set(DISP_ON, DISP_ON);
+                        elapsed_time = 0;
+                        while (elapsed_time < current_step_delay_ms) {}
+                        display_blank();
+                        gs = GS_PLAYBACK;
+                    } else {
+                        gs = GS_INPUT;
+                    }
+                }
+            }
+            // If button still held and minimum duration reached, keep output active
+            break; }
+
         case GS_FAIL: {
-            display_set(DISP_DASH, DISP_DASH);
-            buzzer_start_hz(FAIL_TONE_HZ);
+            // Show fail sequence
+            display_set(DISP_DASH, DISP_DASH);  // Show "--" pattern
+            buzzer_start_hz(FAIL_TONE_HZ);  // Play fail tone
             elapsed_time = 0;
-            while (elapsed_time < current_step_delay_ms) {}
+            while (elapsed_time < current_step_delay_ms) {}  // Hold fail tone/display
             buzzer_stop();
+            
+            // Show user's score (sequence length they reached)
             display_score(len, current_step_delay_ms);
             display_blank();
             elapsed_time = 0;
-            while (elapsed_time < current_step_delay_ms) {}
+            while (elapsed_time < current_step_delay_ms) {}  // Brief pause
             
-            // Advance LFSR past the sequence we just played
-            sequencing_restore_state(round_start_state);
+            // Advance LFSR for next game (as per assignment requirements)
+            sequencing_restore_state(round_start_state);  // Go back to start of failed round
             for (uint8_t j = 0; j < len; j++) {
                 sequencing_next_step();  // Advance past the sequence we just played
             }
             // The LFSR is now positioned at the next step for the new game
             
-            len = 0;
+            len = 0;  // Reset sequence length for new game
             display_blank();  // Ensure display is clear before new round
-            gs = GS_PLAYBACK;
+            gs = GS_PLAYBACK;  // Start new game immediately
             break; }
         }
     }
