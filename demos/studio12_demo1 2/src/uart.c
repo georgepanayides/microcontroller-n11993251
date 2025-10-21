@@ -12,7 +12,7 @@ extern Game_State state;
 extern uint16_t elapsed_time;
 
 static int stdio_putchar(char c, FILE *stream);
-//static int stdio_getchar(FILE *stream);
+static int stdio_getchar(FILE *stream);
 
 static FILE stdio = FDEV_SETUP_STREAM(stdio_putchar, NULL, _FDEV_SETUP_RW);
 

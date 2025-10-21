@@ -26,12 +26,12 @@ playback-delay = true
 playback-frequency = false
 
 # Section E
-uart-gameplay = false
-uart-octave = false
-seed = false
-reset = false
-high-score = false
-mixed-input = false
+uart-gameplay = true
+uart-octave = true
+seed = true
+reset = true
+high-score = true
+mixed-input = true
 
 # ---- Per-test output preferences ----------------------------------- #
 

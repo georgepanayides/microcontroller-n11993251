@@ -5,7 +5,12 @@
 #  define F_CPU 3333333UL
 #endif
 
-/* Calculate PER and CMP for 50% duty cycle */
+#define MAX_OCTAVE 3
+#define MIN_OCTAVE -3
+static int8_t octave = 0;
+
+static const uint16_t base_freq[4] = { 358, 301, 478, 179 };
+
 static inline void tca_calc_50pct(uint16_t hz, uint16_t *per_out, uint16_t *cmp_out)
 {
     if (hz == 0) {
@@ -14,18 +19,13 @@ static inline void tca_calc_50pct(uint16_t hz, uint16_t *per_out, uint16_t *cmp_
         return;
     }
     
-    /* PER = (F_CPU / hz) - 1 */
-    uint32_t per = (F_CPU + (hz / 2u)) / (uint32_t)hz;
+    uint32_t per = (F_CPU + (hz >> 1)) / hz;
     if (per == 0) per = 1;
     per -= 1;
+    if (per > 0xFFFF) per = 0xFFFF;
     
-    if (per > 0xFFFFUL) per = 0xFFFFUL;
-    uint16_t per16 = (uint16_t)per;
-    
-    uint16_t cmp16 = (uint16_t)((per16 + 1u) / 2u);
-    
-    *per_out = per16;
-    *cmp_out = cmp16;
+    *per_out = (uint16_t)per;
+    *cmp_out = (uint16_t)((per + 1) >> 1);
 }
 
 static inline void tca0_enable_if_needed(void) {
@@ -54,8 +54,6 @@ void buzzer_start_hz(uint16_t hz) {
 
     uint16_t per, cmp;
     tca_calc_50pct(hz, &per, &cmp);
-    
-    // Use buffered registers only (like studio demo)
     TCA0.SINGLE.PERBUF = per;
     TCA0.SINGLE.CMP0BUF = cmp;
 }
@@ -63,5 +61,29 @@ void buzzer_start_hz(uint16_t hz) {
 void buzzer_stop(void) {
     TCA0.SINGLE.CMP0BUF = 0;
     PORTB.OUTCLR = PIN0_bm;
+}
+
+void increase_octave(void) {
+    if (octave < MAX_OCTAVE) octave++;
+}
+
+void decrease_octave(void) {
+    if (octave > MIN_OCTAVE) octave--;
+}
+
+void buzzer_on(uint8_t tone_index) {
+    uint16_t freq = base_freq[tone_index & 0x03];
+    
+    if (octave > 0) {
+        freq = freq << octave;
+    } else if (octave < 0) {
+        freq = freq >> (-octave);
+    }
+    
+    buzzer_start_hz(freq);
+}
+
+void buzzer_off(void) {
+    buzzer_stop();
 }
 

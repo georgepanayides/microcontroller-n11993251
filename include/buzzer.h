@@ -11,5 +11,9 @@ void buzzer_stop(void);
 void buzzer_on(uint8_t tone_index);
 void buzzer_off(void);
 
+/* Octave controls */
+void increase_octave(void);
+void decrease_octave(void);
+
 
 #endif
