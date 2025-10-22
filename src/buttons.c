@@ -1,59 +1,60 @@
-#include "buttons.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-/* Simple debounced state - like the demos */
-static volatile uint8_t debounced_state = 0xFF;
+#include "buttons.h"
 
-/* Simple debouncing - call this regularly from main loop */
-void buttons_debounce(void) {
-    static uint8_t vcount1 = 0;      // vertical counter MSB
-    static uint8_t vcount0 = 0;      // vertical counter LSB
+volatile uint8_t pb_debounced = 0xFF;
+
+void pb_debounce(void) {
+    static uint8_t vcount1 = 0;      //vertical counter MSB
+    static uint8_t vcount0 = 0;      //vertical counter LSB
      
-    uint8_t sample = PORTA.IN;
-    uint8_t changed = sample ^ debounced_state;
+    uint8_t pb_sample = PORTA.IN;
 
-    // increment vertical counter
-    vcount1 = (vcount1 ^ vcount0) & changed;  // update MSB of vertical counter
-    vcount0 = ~vcount0 & changed;             // update LSB of vertical counter
+    uint8_t pb_changed = pb_sample ^ pb_debounced;
 
-    debounced_state ^= (vcount0 & vcount1);   // update debounced when vertical counter = 11
-}
+    //increment vertical counter
+    vcount1 = (vcount1 ^ vcount0) & pb_changed;  //update MSB of vertical counter
+    vcount0 = ~vcount0 & pb_changed;             //update LSB of vertical counter
 
-/* Get debounced button state for edge detection */
-uint8_t buttons_get_debounced_state(void) {
-    return debounced_state;
-}
+    pb_debounced ^= (vcount0 & vcount1);         //update debounced when vertial counter = 11
+}//pb_debounce
 
-/* Simple init - just enable pullups and setup display timer */
-void buttons_init(void)
-{
+void pb_init(void) {
+    // already configured as inputs by default
+
+    // enable internal pullup resistors
     PORTA.PIN4CTRL = PORT_PULLUPEN_bm;
     PORTA.PIN5CTRL = PORT_PULLUPEN_bm;
     PORTA.PIN6CTRL = PORT_PULLUPEN_bm;
-    PORTA.PIN7CTRL = PORT_PULLUPEN_bm;
+    PORTA.PIN7CTRL = PORT_PULLUPEN_bm;            
+}//pb_init
+
+// Wrapper for compatibility
+void buttons_init(void) {
+    pb_init();
     
-    debounced_state = PORTA.IN;  // Initialize with current state
-    
-    /* TCB1: 5ms periodic for display only */
+    // Setup TCB1 for 5ms periodic interrupt (display multiplex + button debounce)
     TCB1.CTRLA   = 0;
     TCB1.CNT     = 0;
-    TCB1.CCMP    = 16667;
+    TCB1.CCMP    = 16667;  // 3.3 MHz / 16667 = ~5ms
     TCB1.CTRLB   = TCB_CNTMODE_INT_gc;
     TCB1.INTFLAGS = TCB_CAPT_bm;
     TCB1.INTCTRL  = TCB_CAPT_bm;
     TCB1.CTRLA   = TCB_ENABLE_bm;
 }
 
-/* Simple 5ms ISR - for display multiplexing and button debouncing */
+// TCB1 ISR: Called every 5ms for display multiplexing and button debouncing
 ISR(TCB1_INT_vect)
 {
-    /* Multiplex display every 5 ms */
-    extern void display_multiplex(void);
-    display_multiplex();
+    // Multiplex display
+    extern void swap_display_digit(void);
+    swap_display_digit();
     
-    /* Debounce buttons every 5 ms */
-    buttons_debounce();
+    // Debounce buttons
+    pb_debounce();
 
     TCB1.INTFLAGS = TCB_CAPT_bm;
 }
+
+

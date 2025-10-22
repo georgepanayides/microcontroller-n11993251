@@ -26,12 +26,12 @@ ISR(USART0_RXC_vect)
 {
     uint8_t rx = USART0.RXDATAL;
     
-    // Always handle octave changes
-    if (rx == ',') {
+    // Always handle octave changes (INC FREQ / DEC FREQ)
+    if (rx == ',' || rx == 'k') {
         increase_octave();
         return;
     }
-    if (rx == '.') {
+    if (rx == '.' || rx == 'l') {
         decrease_octave();
         return;
     }

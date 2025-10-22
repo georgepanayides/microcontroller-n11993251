@@ -5,6 +5,6 @@
 
 extern volatile uint16_t elapsed_time;
 
-void tcb0_init_1ms(void);
+void timer_init(void);
 
 #endif

@@ -30,22 +30,11 @@ uint8_t sequencing_next_step(void) {
     return lfsr_state & 0x03u;
 }
 
-void play_step(uint8_t step, uint16_t step_delay_ms) {
-    extern volatile uint16_t elapsed_time;
-    static const uint8_t left_patterns[4] = {DISP_BAR_LEFT, DISP_BAR_RIGHT, DISP_OFF, DISP_OFF};
-    static const uint8_t right_patterns[4] = {DISP_OFF, DISP_OFF, DISP_BAR_LEFT, DISP_BAR_RIGHT};
-    
-    step &= 0x03;
-    uint16_t half_delay = step_delay_ms >> 1;
-    
-    buzzer_on(step);
-    display_set(left_patterns[step], right_patterns[step]);
-    
-    elapsed_time = 0;
-    while (elapsed_time < half_delay) {}
-    
-    display_blank();
-    buzzer_stop();
-    elapsed_time = 0;
-    while (elapsed_time < half_delay) {}
+void sequencing_generate_sequence(uint32_t start_state, uint8_t length, uint8_t *steps_array) {
+    sequencing_restore_state(start_state);
+    for (uint8_t j = 0; j < length; j++) {
+        steps_array[j] = sequencing_next_step();
+    }
 }
+
+// play_step() removed - playback now handled directly in main.c state machine

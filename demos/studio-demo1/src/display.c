@@ -28,31 +28,31 @@ void display_init(void) {
     SPI0.CTRLA |= SPI_ENABLE_bm;   // Enable
 }//display_init
 
-// void find_dec_digits(uint8_t num, uint8_t *hundreds, uint8_t *tens, uint8_t *units) {
-//     *hundreds = 0;    
-//     *tens = 0;
-//     *units = num;
-//     while (*units > 99) {
-//         (*hundreds)++;
-//         (*units) -= 100;
-//     }
+void find_dec_digits(uint8_t num, uint8_t *hundreds, uint8_t *tens, uint8_t *units) {
+    *hundreds = 0;    
+    *tens = 0;
+    *units = num;
+    while (*units > 99) {
+        (*hundreds)++;
+        (*units) -= 100;
+    }
  
-//     while (*units > 9) {
-//         (*tens)++;
-//         (*units) -= 10;
-//     }
+    while (*units > 9) {
+        (*tens)++;
+        (*units) -= 10;
+    }
 
-//     digit_l = number_segs[*tens];
-//     digit_r = number_segs[*units];
-// }//find_dec_digits
+    digit_l = number_segs[*tens];
+    digit_r = number_segs[*units];
+}//find_dec_digits
 
-// void find_hex_digits(uint8_t num, uint8_t* digit1, uint8_t* digit0) {
-//     *digit1 = (num >> 4) & 0x0F;
-//     *digit0 = (num & 0x0F);
+void find_hex_digits(uint8_t num, uint8_t* digit1, uint8_t* digit0) {
+    *digit1 = (num >> 4) & 0x0F;
+    *digit0 = (num & 0x0F);
 
-//     digit_l = number_segs[*digit1];
-//     digit_r = number_segs[*digit0];
-// }//find_dec_digits
+    digit_l = number_segs[*digit1];
+    digit_r = number_segs[*digit0];
+}//find_dec_digits
 
 void set_display_segments(uint8_t segs_l, uint8_t segs_r) {
     digit_l = segs_l;
@@ -60,10 +60,10 @@ void set_display_segments(uint8_t segs_l, uint8_t segs_r) {
 }//set_display_segments
 
 // // Assumes num_l and num_r are in the range 0..15
-// void set_display_numbers(uint8_t num_l, uint8_t num_r) {
-//     digit_l = number_segs[num_l & 0x0F];
-//     digit_r = number_segs[num_r & 0x0F];
-// }//set_display_segments
+void set_display_numbers(uint8_t num_l, uint8_t num_r) {
+     digit_l = number_segs[num_l & 0x0F];
+     digit_r = number_segs[num_r & 0x0F];
+}//set_display_segments
 
 void display_write(uint8_t data) {
     SPI0.DATA = data;              // Note DATA register used for both Tx and Rx

@@ -1,190 +1,232 @@
-// Simon Says game for QUTy microcontroller
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "initialisation.h"
+#include <stdio.h>
+
+#include "timer.h"
+#include "buttons.h"
+#include "buzzer.h"
+#include "adc.h"
 #include "display.h"
 #include "display_macros.h"
-#include "buzzer.h"
-#include "timer.h"
-#include "sequencing.h"
-#include "buttons.h"
-#include "adc.h"
 #include "uart.h"
+#include "sequencing.h"
 
+#define MIN_PLAYBACK_DELAY 250
+#define MAX_PLAYBACK_DELAY 2000
 #define FAIL_TONE_HZ 400
 
-// Global state
+extern uint8_t pb_debounced;
+extern volatile uint16_t elapsed_time;
 
-// studio/tutorial 9 has a state machine we are essentially following and implementing that 
-// focus on doing highscore before UART and octave 
-// while loops should be removed, because they are blocking, we want non blocking code 
-
+// Simon game variables
 static uint32_t round_start_state = 0;
 static uint8_t len = 0;
 static uint8_t i = 0;
 static uint8_t played_steps[64];
-static uint16_t playback_delay_ms = 250;
+static uint8_t pb_step_index = 0;
 
-static const uint8_t digit_masks[10] = {
-    DISP_SEG_A & DISP_SEG_B & DISP_SEG_C & DISP_SEG_D & DISP_SEG_E & DISP_SEG_F,  // 0
-    DISP_SEG_B & DISP_SEG_C,                                                        // 1
-    DISP_SEG_A & DISP_SEG_B & DISP_SEG_G & DISP_SEG_E & DISP_SEG_D,                // 2
-    DISP_SEG_A & DISP_SEG_B & DISP_SEG_C & DISP_SEG_D & DISP_SEG_G,                // 3
-    DISP_SEG_F & DISP_SEG_G & DISP_SEG_B & DISP_SEG_C,                             // 4
-    DISP_SEG_A & DISP_SEG_F & DISP_SEG_G & DISP_SEG_C & DISP_SEG_D,                // 5
-    DISP_SEG_A & DISP_SEG_F & DISP_SEG_E & DISP_SEG_D & DISP_SEG_C & DISP_SEG_G,   // 6
-    DISP_SEG_A & DISP_SEG_B & DISP_SEG_C,                                          // 7
-    DISP_ON,                                                                        // 8
-    DISP_SEG_A & DISP_SEG_B & DISP_SEG_C & DISP_SEG_D & DISP_SEG_F & DISP_SEG_G   // 9
-};
-
-static inline void display_score(uint16_t score, uint16_t ms)
-{
-    extern volatile uint16_t elapsed_time;
-    uint8_t show = score % 100;
-    uint8_t tens = show / 10, ones = show % 10;
-    uint8_t left_mask = (tens == 0 && score < 100) ? DISP_OFF : digit_masks[tens];
-    display_set(left_mask, digit_masks[ones]);
-    elapsed_time = 0;
-    while (elapsed_time < ms) {}
-    display_blank();
-}
-
-static inline void enable_outputs(uint8_t step_index)
-{
-    static const uint8_t left_patterns[4] = {DISP_BAR_LEFT, DISP_BAR_RIGHT, DISP_OFF, DISP_OFF};
-    static const uint8_t right_patterns[4] = {DISP_OFF, DISP_OFF, DISP_BAR_LEFT, DISP_BAR_RIGHT};
-    display_set(left_patterns[step_index], right_patterns[step_index]);
-    buzzer_on(step_index);
-}
-
-static inline void disable_outputs(void)
-{
-    buzzer_stop();
-    display_blank();
-}
-
-static void echo_button(uint8_t b, uint16_t min_duration_ms)
-{
-    extern volatile uint16_t elapsed_time;
-    enable_outputs(b);
-    elapsed_time = 0;
-    while (elapsed_time < min_duration_ms) {}
-    uint8_t button_mask = (1 << (b + 4));
-    while ((buttons_get_debounced_state() & button_mask) == 0) {}
-    disable_outputs();
-}
-
-int main(void)
-{
+void initialisation (void) {
     cli();
-    gpio_init();
-    spi_init_for_display();
-    uart_init();
     buttons_init();
-    display_init();
+    timer_init();    
     buzzer_init();
     adc_init();
-    buzzer_stop();
+    display_init(); 
+    uart_init();
     sequencing_init(0x11993251u);
     sei();
-    
-    // State machine
-    typedef enum { GS_PLAYBACK, GS_INPUT, GS_FAIL } game_state_t;
-    game_state_t gs = GS_PLAYBACK;
-    uint8_t pb_state = 0xFF, pb_state_r = 0xFF, pb_falling;
-    
+}//initialisation
+
+int main (void) {  
+    initialisation();
+
+    uint8_t pb_state = 0xFF;
+    uint8_t pb_state_r = 0xFF;
+    uint8_t pb_changed, pb_rising, pb_falling;
+
+    typedef enum {
+        PLAYBACK_START,
+        PLAYBACK_STEP_ON,
+        PLAYBACK_STEP_OFF,
+        INPUT_WAITING,
+        INPUT_ECHO_ON,
+        SUCCESS_SHOW,
+        FAIL_SHOW,
+        FAIL_SCORE_SHOW,
+        FAIL_WAIT
+    } Game_State;
+
+    Game_State state = PLAYBACK_START;
+    uint16_t playback_delay = MIN_PLAYBACK_DELAY;
+    int8_t input_button = -1;
+
+    buzzer_stop();
+    set_display_segments(DISP_OFF, DISP_OFF);
+
     while (1) {
-        // Update button state
-        pb_state_r = pb_state;
-        pb_state = buttons_get_debounced_state();
-        pb_falling = (pb_state_r ^ pb_state) & pb_state_r;
-        
-        switch (gs) {
-        case GS_PLAYBACK:
-            if (len == 0) round_start_state = sequencing_save_state();
-            len++;
-            
-            // Read ADC and play sequence
-            playback_delay_ms = playback_delay_ms_from_adc8(adc_read8());
-            sequencing_restore_state(round_start_state);
-            for (uint8_t j = 0; j < len; j++) {
-                played_steps[j] = sequencing_next_step();
-                play_step(played_steps[j], playback_delay_ms);
-            }
-            
-            // Prepare for input
-            i = 0;
-            pb_state = buttons_get_debounced_state();
-            pb_state_r = pb_state;
-            uart_game_input = -1;
-            uart_input_enabled = 1;
-            gs = GS_INPUT;
-            break;
-            
-        case GS_INPUT: {
-            int8_t b = -1;
-            if (uart_game_input >= 0) {
-                b = uart_game_input;
-                uart_game_input = -1;
-            }
-            
-            // Then check buttons if no UART input
-            if (b < 0) {
-                if (pb_falling & PIN4_bm) b = 0;
-                else if (pb_falling & PIN5_bm) b = 1;
-                else if (pb_falling & PIN6_bm) b = 2;
-                else if (pb_falling & PIN7_bm) b = 3;
-                else break; // No input, continue looping
-            }
-            
-            // Echo the input
-            echo_button(b, playback_delay_ms >> 1);
-            
-            // Check if correct
-            if ((uint8_t)b == played_steps[i]) {
-                i++;
-                if (i == len) {
-                    // Disable input and show success
-                    cli();
-                    uart_input_enabled = 0;
-                    sei();
-                    display_set(DISP_ON, DISP_ON);
+        pb_state_r = pb_state;      // register the previous pushbutton sample
+        pb_state = PORTA.IN;        // new sample of current pushbutton state
+        pb_state = pb_debounced;    // new sample of current pushbutton state - after debouncing
+
+        pb_changed = pb_state_r ^ pb_state;    
+
+        pb_falling = pb_changed & pb_state_r;   
+        pb_rising = pb_changed & pb_state;
+
+        playback_delay = (((uint16_t) (MAX_PLAYBACK_DELAY - MIN_PLAYBACK_DELAY) * ADC0.RESULT) >> 8) + MIN_PLAYBACK_DELAY;
+
+        switch (state) {
+            case PLAYBACK_START:
+                // Start new round
+                if (len == 0) round_start_state = sequencing_save_state();
+                len++;
+                
+                // Use sequencing helper function instead of loop
+                sequencing_generate_sequence(round_start_state, len, played_steps);
+                
+                pb_step_index = 0;
+                buzzer_on(played_steps[0]);
+                set_display_segments(left_patterns[played_steps[0]], right_patterns[played_steps[0]]);
+                state = PLAYBACK_STEP_ON;
+                elapsed_time = 0;
+                break;
+
+            case PLAYBACK_STEP_ON:
+                if (elapsed_time > (playback_delay >> 1)) {  // 50% of playback delay
+                    buzzer_stop();
+                    set_display_segments(DISP_OFF, DISP_OFF);
+                    state = PLAYBACK_STEP_OFF;
                     elapsed_time = 0;
-                    while (elapsed_time < playback_delay_ms) {}
-                    display_blank();
-                    gs = GS_PLAYBACK;
                 }
-            } else {
-                // Incorrect input - disable and fail
-                cli();
-                uart_input_enabled = 0;
-                sei();
-                gs = GS_FAIL;
-            }
-            break; }
-            
-        case GS_FAIL:
-            playback_delay_ms = playback_delay_ms_from_adc8(adc_read8());
-            
-            // Show fail animation
-            display_set(DISP_DASH, DISP_DASH);
-            buzzer_start_hz(FAIL_TONE_HZ);
-            elapsed_time = 0;
-            while (elapsed_time < playback_delay_ms) {}
-            buzzer_stop();
-            
-            // Show score
-            display_score(len, playback_delay_ms);
-            elapsed_time = 0;
-            while (elapsed_time < playback_delay_ms) {} // remove non blocking 
-            
-            // Advance RNG and reset
-            sequencing_restore_state(round_start_state);
-            for (uint8_t j = 0; j < len; j++) sequencing_next_step();
-            len = 0;
-            gs = GS_PLAYBACK;
-            break;
-        }
-    }
-}
+                break;
+
+            case PLAYBACK_STEP_OFF:
+                if (elapsed_time > (playback_delay >> 1)) {
+                    pb_step_index++;
+                    if (pb_step_index >= len) {
+                        // Playback done, wait for input
+                        i = 0;
+                        pb_state = pb_debounced;
+                        pb_state_r = pb_state;
+                        uart_game_input = -1;
+                        uart_input_enabled = 1;
+                        state = INPUT_WAITING;
+                    } else {
+                        buzzer_on(played_steps[pb_step_index]);
+                        set_display_segments(left_patterns[played_steps[pb_step_index]], right_patterns[played_steps[pb_step_index]]);
+                        state = PLAYBACK_STEP_ON;
+                        elapsed_time = 0;
+                    }
+                }
+                break;
+
+            case INPUT_WAITING:
+                // Check UART first
+                if (uart_game_input >= 0) {
+                    input_button = uart_game_input;
+                    uart_game_input = -1;
+                    buzzer_on((uint8_t)input_button);
+                    set_display_segments(left_patterns[input_button], right_patterns[input_button]);
+                    state = INPUT_ECHO_ON;
+                    elapsed_time = 0;
+                // Then check pushbuttons
+                } else if (pb_falling & PIN4_bm) {
+                    input_button = 0;
+                    buzzer_on(0);
+                    set_display_segments(left_patterns[0], right_patterns[0]);
+                    state = INPUT_ECHO_ON;
+                    elapsed_time = 0;
+                } else if (pb_falling & PIN5_bm) {
+                    input_button = 1;
+                    buzzer_on(1);
+                    set_display_segments(left_patterns[1], right_patterns[1]);
+                    state = INPUT_ECHO_ON;
+                    elapsed_time = 0;
+                } else if (pb_falling & PIN6_bm) {
+                    input_button = 2;
+                    buzzer_on(2);
+                    set_display_segments(left_patterns[2], right_patterns[2]);
+                    state = INPUT_ECHO_ON;
+                    elapsed_time = 0;
+                } else if (pb_falling & PIN7_bm) {
+                    input_button = 3;
+                    buzzer_on(3);
+                    set_display_segments(left_patterns[3], right_patterns[3]);
+                    state = INPUT_ECHO_ON;
+                    elapsed_time = 0;
+                }
+                break;
+
+            case INPUT_ECHO_ON:
+                if ((pb_rising & (1 << (input_button + 4))) || (elapsed_time > (playback_delay >> 1))) {
+                    buzzer_stop();
+                    set_display_segments(DISP_OFF, DISP_OFF);
+                    
+                    if ((uint8_t)input_button == played_steps[i]) {
+                        i++;
+                        if (i == len) {
+                            uart_input_enabled = 0;
+                            set_display_segments(DISP_ON, DISP_ON);
+                            state = SUCCESS_SHOW;
+                            elapsed_time = 0;
+                        } else {
+                            state = INPUT_WAITING;
+                        }
+                    } else {
+                        uart_input_enabled = 0;
+                        state = FAIL_SHOW;
+                        elapsed_time = 0;
+                    }
+                }
+                break;
+
+            case SUCCESS_SHOW:
+                if (elapsed_time > playback_delay) {
+                    set_display_segments(DISP_OFF, DISP_OFF);
+                    state = PLAYBACK_START;
+                }
+                break;
+
+            case FAIL_SHOW:
+                if (elapsed_time == 0) {
+                    set_display_segments(DISP_DASH, DISP_DASH);
+                    buzzer_start_hz(FAIL_TONE_HZ);
+                }
+                if (elapsed_time > playback_delay) {
+                    buzzer_stop();
+                    
+                    uint8_t show = len % 100;
+                    uint8_t tens = show / 10, ones = show % 10;
+                    uint8_t left_mask = (tens == 0 && len < 100) ? DISP_OFF : digit_masks[tens];
+                    set_display_segments(left_mask, digit_masks[ones]);
+                    
+                    state = FAIL_SCORE_SHOW;
+                    elapsed_time = 0;
+                }
+                break;
+
+            case FAIL_SCORE_SHOW:
+                if (elapsed_time > playback_delay) {
+                    set_display_segments(DISP_OFF, DISP_OFF);
+                    state = FAIL_WAIT;
+                    elapsed_time = 0;
+                }
+                break;
+
+            case FAIL_WAIT:
+                if (elapsed_time > playback_delay) {
+                    // Advance LFSR past the failed sequence
+                    sequencing_restore_state(round_start_state);
+                    for (uint8_t j = 0; j < len; j++) sequencing_next_step();
+                    len = 0;
+                    state = PLAYBACK_START;
+                }
+                break;
+
+             default:
+                buzzer_stop();
+                set_display_segments(DISP_OFF, DISP_OFF);
+                state = PLAYBACK_START;
+        }//switch
+    }//while
+}//main
