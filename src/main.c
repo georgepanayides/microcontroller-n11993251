@@ -14,6 +14,11 @@
 #define FAIL_TONE_HZ 400
 
 // Global state
+
+// studio/tutorial 9 has a state machine we are essentially following and implementing that 
+// focus on doing highscore before UART and octave 
+// while loops should be removed, because they are blocking, we want non blocking code 
+
 static uint32_t round_start_state = 0;
 static uint8_t len = 0;
 static uint8_t i = 0;
@@ -75,74 +80,74 @@ int main(void)
     cli();
     gpio_init();
     spi_init_for_display();
-    tcb0_init_1ms();
     uart_init();
     buttons_init();
     display_init();
     buzzer_init();
-    adc_init_pot_8bit();
+    adc_init();
     buzzer_stop();
     sequencing_init(0x11993251u);
     sei();
     
-    // State machine variables
+    // State machine
     typedef enum { GS_PLAYBACK, GS_INPUT, GS_FAIL } game_state_t;
     game_state_t gs = GS_PLAYBACK;
-    uint8_t pb_state = 0xFF, pb_state_r = 0xFF;
+    uint8_t pb_state = 0xFF, pb_state_r = 0xFF, pb_falling;
     
     while (1) {
+        // Update button state
         pb_state_r = pb_state;
         pb_state = buttons_get_debounced_state();
-        uint8_t pb_falling = (pb_state_r ^ pb_state) & pb_state_r;
+        pb_falling = (pb_state_r ^ pb_state) & pb_state_r;
         
         switch (gs) {
         case GS_PLAYBACK:
             if (len == 0) round_start_state = sequencing_save_state();
             len++;
+            
+            // Read ADC and play sequence
+            playback_delay_ms = playback_delay_ms_from_adc8(adc_read8());
             sequencing_restore_state(round_start_state);
             for (uint8_t j = 0; j < len; j++) {
                 played_steps[j] = sequencing_next_step();
-                playback_delay_ms = playback_delay_ms_from_adc8(adc_read8());
                 play_step(played_steps[j], playback_delay_ms);
             }
-            sequencing_restore_state(round_start_state);
+            
+            // Prepare for input
             i = 0;
             pb_state = buttons_get_debounced_state();
             pb_state_r = pb_state;
-            cli();
             uart_game_input = -1;
             uart_input_enabled = 1;
-            sei();
             gs = GS_INPUT;
             break;
             
         case GS_INPUT: {
             int8_t b = -1;
-            cli();
             if (uart_game_input >= 0) {
                 b = uart_game_input;
                 uart_game_input = -1;
             }
-            sei();
             
+            // Then check buttons if no UART input
             if (b < 0) {
                 if (pb_falling & PIN4_bm) b = 0;
                 else if (pb_falling & PIN5_bm) b = 1;
                 else if (pb_falling & PIN6_bm) b = 2;
                 else if (pb_falling & PIN7_bm) b = 3;
+                else break; // No input, continue looping
             }
             
-            if (b < 0) break;
-            
-            playback_delay_ms = playback_delay_ms_from_adc8(adc_read8());
+            // Echo the input
             echo_button(b, playback_delay_ms >> 1);
             
+            // Check if correct
             if ((uint8_t)b == played_steps[i]) {
                 i++;
                 if (i == len) {
+                    // Disable input and show success
                     cli();
                     uart_input_enabled = 0;
-                    uart_game_input = -1;
                     sei();
                     display_set(DISP_ON, DISP_ON);
                     elapsed_time = 0;
@@ -151,9 +156,9 @@ int main(void)
                     gs = GS_PLAYBACK;
                 }
             } else {
+                // Incorrect input - disable and fail
                 cli();
                 uart_input_enabled = 0;
-                uart_game_input = -1;
                 sei();
                 gs = GS_FAIL;
             }
@@ -161,19 +166,23 @@ int main(void)
             
         case GS_FAIL:
             playback_delay_ms = playback_delay_ms_from_adc8(adc_read8());
+            
+            // Show fail animation
             display_set(DISP_DASH, DISP_DASH);
             buzzer_start_hz(FAIL_TONE_HZ);
             elapsed_time = 0;
             while (elapsed_time < playback_delay_ms) {}
             buzzer_stop();
+            
+            // Show score
             display_score(len, playback_delay_ms);
-            display_blank();
             elapsed_time = 0;
-            while (elapsed_time < playback_delay_ms) {}
+            while (elapsed_time < playback_delay_ms) {} // remove non blocking 
+            
+            // Advance RNG and reset
             sequencing_restore_state(round_start_state);
             for (uint8_t j = 0; j < len; j++) sequencing_next_step();
             len = 0;
-            display_blank();
             gs = GS_PLAYBACK;
             break;
         }

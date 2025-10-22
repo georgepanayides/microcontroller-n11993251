@@ -26,6 +26,7 @@ ISR(USART0_RXC_vect)
 {
     uint8_t rx = USART0.RXDATAL;
     
+    // Always handle octave changes
     if (rx == ',') {
         increase_octave();
         return;
@@ -35,13 +36,15 @@ ISR(USART0_RXC_vect)
         return;
     }
     
+    // Only process game inputs when enabled
     if (!uart_input_enabled) return;
     
-    // Map inputs to steps (optimized)
+    // Only accept valid game inputs - ignore everything else
     if (rx == '1' || rx == 'q') uart_game_input = 0;
     else if (rx == '2' || rx == 'w') uart_game_input = 1;
     else if (rx == '3' || rx == 'e') uart_game_input = 2;
     else if (rx == '4' || rx == 'r') uart_game_input = 3;
+    // Invalid characters are automatically discarded - no blocking!
 }
 
 uint8_t uart_getc(void)

@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 /* Configure ADC0 for 8-bit free-running reads on the POT (AIN2), safe at 20 MHz */
-void adc_init_pot_8bit(void);
+void adc_init(void);
 
 /* Read current 8-bit ADC sample (0..255); clockwise ≈ larger value on QUTy */
 uint8_t adc_read8(void);
@@ -14,7 +14,7 @@ uint8_t adc_read8(void);
 static inline uint16_t playback_delay_ms_from_adc8(uint8_t x)
 {
     /* 250 + x * 1750 / 255 */
-    return (uint16_t)(250u + ((uint32_t)x * 1750u) / 255u);
+    return (uint16_t)(250u + (((uint32_t)x * 1750ull) / 255u)); // change the calc to add before not add apart of so the math is correct 
 }
 
 #endif

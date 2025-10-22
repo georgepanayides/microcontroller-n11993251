@@ -56,7 +56,7 @@ int main (void) {
 
     while (1) {
         pb_state_r = pb_state;     // register the previous pushbutton sample
-        //pb_state = PORTA.IN;       // new sample of current pushbutton state
+        pb_state = PORTA.IN;       // new sample of current pushbutton state
         pb_state = pb_debounced;    // new sample of current pushbutton state - after debouncing
 
         pb_changed = pb_state_r ^ pb_state;    
@@ -65,10 +65,10 @@ int main (void) {
         pb_rising = pb_changed & pb_state;
 
         // if S1 pressed
-        //if (pb_falling & PIN4_bm) {
-        //    printf ("%u\n",count);
-        //    count = (count == 99)? 0 : count + 1;            
-        //}
+        if (pb_falling & PIN4_bm) {
+            printf ("%u\n",count);
+            count = (count == 99)? 0 : count + 1;            
+        }
 
         switch (state) {
             case AWAITING_INPUT:

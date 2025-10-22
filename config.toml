@@ -12,7 +12,7 @@
 # Commenting/removing one of these lines is equivalent to disabling the corresponding test
 
 # Section A
-gameplay = false
+gameplay = true
 pushbutton-hold = false
 pushbutton-debouncing = false
 

@@ -9,7 +9,7 @@
 static uint32_t lfsr_state = 0x11993251u;
 #define LFSR_MASK 0xE2025CABu
 
-const uint16_t step_freq[4] = { 358, 301, 478, 179 };
+const uint16_t step_freq[4] = { 358, 301, 478, 179 }; // 3333333 / these frequencies
 
 void sequencing_init(uint32_t seed) {
     lfsr_state = (seed == 0) ? 1u : seed;

@@ -10,7 +10,9 @@
 static int8_t octave = 0;
 
 static const uint16_t base_freq[4] = { 358, 301, 478, 179 };
-
+// 1666666 / 45 = 37037
+// 3333333 isnt going to work because it cant get stored in an 8 bit const 
+// should just do the calc then call this in the main 
 static inline void tca_calc_50pct(uint16_t hz, uint16_t *per_out, uint16_t *cmp_out)
 {
     if (hz == 0) {
@@ -36,7 +38,7 @@ static inline void tca0_enable_if_needed(void) {
         TCA0.SINGLE.CTRLB = TCA_SINGLE_WGMODE_SINGLESLOPE_gc | TCA_SINGLE_CMP0EN_bm;
         TCA0.SINGLE.PER = 1;
         TCA0.SINGLE.CMP0 = 0;
-        TCA0.SINGLE.CTRLA = TCA_SINGLE_CLKSEL_DIV1_gc | TCA_SINGLE_ENABLE_bm;
+        TCA0.SINGLE.CTRLA = TCA_SINGLE_CLKSEL_DIV1_gc | TCA_SINGLE_ENABLE_bm; // should be using DIV2 
     }
 }
 
