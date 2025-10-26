@@ -42,7 +42,8 @@ int main (void) {
 
     uint8_t pb_state = 0xFF;
     uint8_t pb_state_r = 0xFF;
-    uint8_t pb_changed, pb_rising, pb_falling;
+    uint8_t pb_changed, pb_falling, pb_rising;
+    uint8_t pb_released = 0;
 
     typedef enum {
         PLAYBACK_START,
@@ -58,6 +59,7 @@ int main (void) {
 
     Game_State state = PLAYBACK_START;
     uint16_t playback_delay = MIN_PLAYBACK_DELAY;
+    uint16_t half_delay = MIN_PLAYBACK_DELAY >> 1;  // Pre-compute 50%
     int8_t input_button = -1;
 
     buzzer_stop();
@@ -70,10 +72,12 @@ int main (void) {
 
         pb_changed = pb_state_r ^ pb_state;    
 
-        pb_falling = pb_changed & pb_state_r;   
+        pb_falling = pb_changed & pb_state_r;
         pb_rising = pb_changed & pb_state;
 
+        // Read potentiometer continuously (free-running ADC updates this)
         playback_delay = (((uint16_t) (MAX_PLAYBACK_DELAY - MIN_PLAYBACK_DELAY) * ADC0.RESULT) >> 8) + MIN_PLAYBACK_DELAY;
+        half_delay = playback_delay >> 1;  // Pre-compute 50% to avoid re-reading ADC mid-state
 
         switch (state) {
             case PLAYBACK_START:
@@ -92,7 +96,7 @@ int main (void) {
                 break;
 
             case PLAYBACK_STEP_ON:
-                if (elapsed_time > (playback_delay >> 1)) {  // 50% of playback delay
+                if (elapsed_time > half_delay) {  // Use pre-computed 50%
                     buzzer_stop();
                     set_display_segments(DISP_OFF, DISP_OFF);
                     state = PLAYBACK_STEP_OFF;
@@ -101,7 +105,7 @@ int main (void) {
                 break;
 
             case PLAYBACK_STEP_OFF:
-                if (elapsed_time > (playback_delay >> 1)) {
+                if (elapsed_time > half_delay) {  // Use same pre-computed 50%
                     pb_step_index++;
                     if (pb_step_index >= len) {
                         // Playback done, wait for input
@@ -125,6 +129,7 @@ int main (void) {
                 if (uart_game_input >= 0) {
                     input_button = uart_game_input;
                     uart_game_input = -1;
+                    pb_released = 1;  // UART has no button to release
                     buzzer_on((uint8_t)input_button);
                     set_display_segments(left_patterns[input_button], right_patterns[input_button]);
                     state = INPUT_ECHO_ON;
@@ -132,24 +137,28 @@ int main (void) {
                 // Then check pushbuttons
                 } else if (pb_falling & PIN4_bm) {
                     input_button = 0;
+                    pb_released = 0;  // Wait for button release
                     buzzer_on(0);
                     set_display_segments(left_patterns[0], right_patterns[0]);
                     state = INPUT_ECHO_ON;
                     elapsed_time = 0;
                 } else if (pb_falling & PIN5_bm) {
                     input_button = 1;
+                    pb_released = 0;
                     buzzer_on(1);
                     set_display_segments(left_patterns[1], right_patterns[1]);
                     state = INPUT_ECHO_ON;
                     elapsed_time = 0;
                 } else if (pb_falling & PIN6_bm) {
                     input_button = 2;
+                    pb_released = 0;
                     buzzer_on(2);
                     set_display_segments(left_patterns[2], right_patterns[2]);
                     state = INPUT_ECHO_ON;
                     elapsed_time = 0;
                 } else if (pb_falling & PIN7_bm) {
                     input_button = 3;
+                    pb_released = 0;
                     buzzer_on(3);
                     set_display_segments(left_patterns[3], right_patterns[3]);
                     state = INPUT_ECHO_ON;
@@ -158,7 +167,17 @@ int main (void) {
                 break;
 
             case INPUT_ECHO_ON:
-                if ((pb_rising & (1 << (input_button + 4))) || (elapsed_time > (playback_delay >> 1))) {
+                // Wait for button release
+                if (!pb_released) {
+                    if ((pb_rising & PIN4_bm && input_button == 0) ||
+                        (pb_rising & PIN5_bm && input_button == 1) ||
+                        (pb_rising & PIN6_bm && input_button == 2) ||
+                        (pb_rising & PIN7_bm && input_button == 3)) {
+                        pb_released = 1;
+                    }
+                }
+                // Stop after button released AND minimum time elapsed
+                if (pb_released && elapsed_time >= half_delay) {
                     buzzer_stop();
                     set_display_segments(DISP_OFF, DISP_OFF);
                     
@@ -194,12 +213,10 @@ int main (void) {
                 }
                 if (elapsed_time > playback_delay) {
                     buzzer_stop();
-                    
                     uint8_t show = len % 100;
                     uint8_t tens = show / 10, ones = show % 10;
                     uint8_t left_mask = (tens == 0 && len < 100) ? DISP_OFF : digit_masks[tens];
                     set_display_segments(left_mask, digit_masks[ones]);
-                    
                     state = FAIL_SCORE_SHOW;
                     elapsed_time = 0;
                 }

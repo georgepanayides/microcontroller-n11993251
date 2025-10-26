@@ -75,10 +75,10 @@ int main (void) {
         pb_rising = pb_changed & pb_state;
 
         // if S1 pressed
-        //if (pb_falling & PIN4_bm) {
-        //    printf ("%u\n",count);
-        //    count = (count == 99)? 0 : count + 1;            
-        //}
+        if (pb_falling & PIN4_bm) {
+           printf ("%u\n",count);
+           count = (count == 99)? 0 : count + 1;            
+        }
 
         playback_delay = (((uint16_t) (MAX_PLAYBACK_DELAY - MIN_PLAYBACK_DELAY) * ADC0.RESULT) >> 8) + MIN_PLAYBACK_DELAY;
 

@@ -9,8 +9,6 @@
 static uint32_t lfsr_state = 0x11993251u;
 #define LFSR_MASK 0xE2025CABu
 
-const uint16_t step_freq[4] = { 358, 301, 478, 179 }; // 3333333 / these frequencies
-
 void sequencing_init(uint32_t seed) {
     lfsr_state = (seed == 0) ? 1u : seed;
 }
@@ -37,4 +35,3 @@ void sequencing_generate_sequence(uint32_t start_state, uint8_t length, uint8_t 
     }
 }
 
-// play_step() removed - playback now handled directly in main.c state machine

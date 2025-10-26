@@ -12,26 +12,26 @@
 # Commenting/removing one of these lines is equivalent to disabling the corresponding test
 
 # Section A
-gameplay = true
-pushbutton-hold = false
+gameplay = false
+pushbutton-hold = true
 pushbutton-debouncing = false
 
 # Section B
 sequencing = false
 
 # Section C
-playback-delay = true
+playback-delay = false
 
 # Section D
 playback-frequency = false
 
 # Section E
-uart-gameplay = true
-uart-octave = true
-seed = true
-reset = true
-high-score = true
-mixed-input = true
+uart-gameplay = false
+uart-octave = false
+seed = false
+reset = false
+high-score = false
+mixed-input = false
 
 # ---- Per-test output preferences ----------------------------------- #
 
